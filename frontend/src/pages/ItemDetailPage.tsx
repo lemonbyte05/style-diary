@@ -16,6 +16,7 @@ export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<Item | null>(null);
   const [stamped, setStamped] = useState(false);
+  const [added, setAdded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -126,14 +127,23 @@ export default function ItemDetailPage() {
       <div className="mt-8 flex items-center gap-4">
         <motion.button
           whileTap={{ scale: 0.98 }}
-          onClick={() => {
+          onClick={async () => {
+            if (added) return;
             haptic.stamp();
-            setStamped(true);
-            setTimeout(() => setStamped(false), 1600);
+            try {
+              await api.todayAdd(item.id);
+              setAdded(true);
+              setStamped(true);
+              setTimeout(() => setStamped(false), 1600);
+            } catch {
+              /* 保持原状 */
+            }
           }}
-          className="relative flex-1 border-b border-ink pb-1.5 text-center text-folio tracking-[0.22em] text-ink transition-colors hover:text-rose-deep"
+          className={`relative flex-1 border-b pb-1.5 text-center text-folio tracking-[0.22em] transition-colors ${
+            added ? "border-rose-deep text-rose-deep" : "border-ink text-ink hover:text-rose-deep"
+          }`}
         >
-          加入今日穿搭
+          {added ? "已放入今日穿搭" : "加入今日穿搭"}
           <StampSeal show={stamped} label="已放入" />
         </motion.button>
         <span className="text-edge">/</span>

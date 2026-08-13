@@ -36,5 +36,14 @@ def init_db() -> None:
                 note TEXT DEFAULT '',
                 item_ids TEXT NOT NULL DEFAULT '[]'
             );
+
+            CREATE TABLE IF NOT EXISTS saved_looks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                main_item_id INTEGER,
+                second_item_id INTEGER,
+                reason TEXT DEFAULT '',
+                context TEXT DEFAULT ''
+            );
             """
         )

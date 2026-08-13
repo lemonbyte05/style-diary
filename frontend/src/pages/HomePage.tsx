@@ -352,9 +352,27 @@ function TodayEdit({
   const [rec, setRec] = useState(recommendation);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
   const navigate = useNavigate();
 
   const openItem = (id: number) => navigate(`/item/${id}`);
+
+  const save = async () => {
+    if (saved || !main) return;
+    haptic.stamp();
+    try {
+      const res = await api.saveLook({
+        main_item_id: main.id,
+        second_item_id: second?.id ?? null,
+        reason: rec.reason,
+        context: rec.context,
+      });
+      setSavedCount(res.count);
+      setSaved(true);
+    } catch {
+      /* 保存失败则保持原状 */
+    }
+  };
 
   const regenerate = async () => {
     if (loading) return;
@@ -415,15 +433,14 @@ function TodayEdit({
           </div>
 
           <button
-            onClick={() => {
-              haptic.stamp();
-              setSaved(true);
-              setTimeout(() => setSaved(false), 1600);
-            }}
-            className="group relative mt-8 inline-flex items-center gap-2"
+            onClick={save}
+            disabled={saved}
+            className="group relative mt-8 inline-flex items-center gap-2 disabled:cursor-default"
           >
-            <span className="border-b border-ink pb-1 text-folio tracking-[0.22em] text-ink transition-colors group-hover:text-rose-deep">
-              SAVE THIS LOOK
+            <span className={`border-b pb-1 text-folio tracking-[0.22em] transition-colors ${
+              saved ? "border-rose-deep text-rose-deep" : "border-ink text-ink group-hover:text-rose-deep"
+            }`}>
+              {saved ? `SAVED · ${savedCount}` : "SAVE THIS LOOK"}
             </span>
             <StampSeal show={saved} />
           </button>

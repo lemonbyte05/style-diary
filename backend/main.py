@@ -184,6 +184,63 @@ class AiRequest(BaseModel):
     occasion: str = "日常"
 
 
+class SaveLook(BaseModel):
+    main_item_id: int
+    second_item_id: Optional[int] = None
+    reason: str = ""
+    context: str = ""
+
+
+class TodayAdd(BaseModel):
+    item_id: int
+
+
+@app.post("/api/saved")
+def save_look(body: SaveLook) -> dict:
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO saved_looks (created_at, main_item_id, second_item_id, reason, context)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                date.today().isoformat(),
+                body.main_item_id,
+                body.second_item_id,
+                body.reason,
+                body.context,
+            ),
+        )
+        count = conn.execute("SELECT COUNT(*) AS c FROM saved_looks").fetchone()["c"]
+        return {"ok": True, "count": count}
+
+
+@app.post("/api/today/add")
+def today_add(body: TodayAdd) -> dict:
+    today = date.today().isoformat()
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM outfits WHERE date = ? ORDER BY id LIMIT 1", (today,)
+        ).fetchone()
+        if row:
+            ids = json.loads(row["item_ids"])
+            if body.item_id not in ids:
+                ids.append(body.item_id)
+            conn.execute(
+                "UPDATE outfits SET item_ids = ? WHERE id = ?",
+                (json.dumps(ids), row["id"]),
+            )
+            return {"ok": True, "outfit_id": row["id"]}
+        cur = conn.execute(
+            """
+            INSERT INTO outfits (date, title, mood, weather, occasion, note, item_ids)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (today, "今日穿搭", "🎀", "晴", "日常", "今天的第一件。", json.dumps([body.item_id])),
+        )
+        return {"ok": True, "outfit_id": cur.lastrowid}
+
+
 def _recommend(conn, occasion: str) -> dict:
     rows = conn.execute("SELECT * FROM items ORDER BY love_level DESC").fetchall()
     items = [serialize_item(r) for r in rows]
