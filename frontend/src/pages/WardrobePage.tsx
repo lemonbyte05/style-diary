@@ -3,10 +3,8 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { api } from "@/api";
 import type { Item } from "@/types";
-import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
-import { KeywordChip } from "@/components/ui/KeywordChip";
-import { PolaroidCard } from "@/components/ui/PolaroidCard";
+import { ArchivePlate } from "@/components/ui/ArchivePlate";
 
 const CATEGORIES = ["全部", "上衣", "裙装", "外套", "配饰"];
 
@@ -24,67 +22,123 @@ export default function WardrobePage() {
     : items;
 
   return (
-    <div className="mx-auto max-w-md px-6 pb-36 pt-8">
+    <div className="mx-auto max-w-md px-7 pb-40 pt-9">
       <motion.header
-        initial={{ opacity: 0, y: -12 }}
+        initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
-        className="relative mb-5 text-center"
       >
-        <span className="absolute left-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
-          ✦ 收藏册
-        </span>
-        <span className="absolute right-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
-          第 一 页
-        </span>
-        <p className="font-folio tracking-[0.3em] text-ink-faint">WARDROBE</p>
-        <h1 className="mt-2 font-serif text-title text-ink">我的衣橱</h1>
-        <FolioText className="mt-1 block">{items.length} 件收藏 · 都是故事</FolioText>
+        <div className="flex items-baseline justify-between">
+          <FolioText>✦ FASHION ARCHIVE</FolioText>
+          <FolioText>VOL.01</FolioText>
+        </div>
+        <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">WARDROBE</h1>
+        <p className="mt-2 font-serif text-caption text-ink-soft">我的衣橱</p>
+        <p className="mt-4 text-folio text-ink-faint">
+          {items.length} PIECES / AUGUST ARCHIVE
+        </p>
+        <p className="mt-2 font-hand text-sm text-ink-soft">每一件，都是某一段日子的收藏。</p>
       </motion.header>
 
+      {/* 发丝线搜索（非胶囊） */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15 }}
-        className="mb-4 flex items-center gap-2 rounded-full bg-paper-soft px-4 py-2.5 shadow-1"
+        className="mt-7 flex items-center gap-2 border-b border-edge pb-2"
       >
-        <Search size={15} strokeWidth={1.5} className="text-ink-faint" />
+        <Search size={14} strokeWidth={1.2} className="shrink-0 text-ink-faint" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="找一件喜欢的…"
-          className="w-full bg-transparent text-body text-ink outline-none placeholder:text-ink-faint"
+          className="w-full bg-transparent text-body text-ink outline-none placeholder:text-ink-faint/70"
         />
       </motion.div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      {/* 分类：细线文字链接 */}
+      <div className="mt-5 flex flex-wrap items-center">
         {CATEGORIES.map((c, i) => (
-          <KeywordChip key={c} label={c} active={category === c} onClick={() => setCategory(c)} delay={i * 0.04} />
+          <button
+            key={c}
+            onClick={() => setCategory(c)}
+            className="flex items-center"
+          >
+            {i > 0 && <span className="mx-2 text-edge">·</span>}
+            <span
+              className={`text-caption transition-colors ${
+                category === c ? "border-b border-ink text-ink" : "text-ink-faint hover:text-ink-soft"
+              }`}
+            >
+              {c}
+            </span>
+          </button>
         ))}
       </div>
 
-      <TornDivider label="收藏" note="每一件，都值得被记住" />
+      <div className="editorial-rule mt-7 w-full" />
 
       {filtered.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center py-16 text-center">
-          <span className="text-5xl">🪡</span>
+        <div className="flex flex-col items-center py-24 text-center">
+          <span className="font-serif text-3xl text-ink-faint/40">—</span>
           <p className="mt-4 font-hand text-lg text-ink-soft">还没有找到，再想想别的关键词？</p>
-          <FolioText className="mt-2">或者，去收藏新的一件</FolioText>
+          <FolioText className="mt-2">OR START A NEW COLLECTION</FolioText>
         </div>
       ) : (
-        <div className="columns-2 gap-4">
-          {filtered.map((item, i) => (
-            <div key={item.id} className="mb-4 break-inside-avoid">
-              <PolaroidCard
-                item={item}
-                rotate={i % 3 === 0 ? -1.6 : i % 3 === 1 ? 1.3 : -0.6}
-                delay={Math.min(i * 0.05, 0.4)}
-                index={i}
-              />
-            </div>
-          ))}
+        <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
+          {filtered.map((item, i) => {
+            const mod = i % 4;
+            if (mod === 0) {
+              return <FeaturedBand key={item.id} items={filtered.slice(i, i + 2)} no={Math.floor(i / 4) + 1} onOpen={(id) => (window.location.href = `/item/${id}`)} />;
+            }
+            return (
+              <div key={item.id} className={mod === 2 ? "mt-10" : ""}>
+                <ArchivePlate
+                  item={item}
+                  index={i}
+                  rotate={mod === 1 ? -1.6 : 1.2}
+                  tall={mod !== 2}
+                  tape={i === 1 || i === 5}
+                  onOpen={(id) => (window.location.href = `/item/${id}`)}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------- 横向 Collection 带：两件并排 ---------- */
+function FeaturedBand({
+  items,
+  no,
+  onOpen,
+}: {
+  items: Item[];
+  no: number;
+  onOpen: (id: number) => void;
+}) {
+  return (
+    <div className="col-span-2">
+      <div className="flex items-baseline justify-between">
+        <FolioText>COLLECTION NO.{String(no).padStart(2, "0")}</FolioText>
+        <span className="font-hand text-xs text-ink-faint">顺手搭在一起的一件</span>
+      </div>
+      <div className="mt-3 flex gap-4">
+        {items.map((item, j) => (
+          <div key={item.id} className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}>
+            <ArchivePlate
+              item={item}
+              index={item.id}
+              rotate={j === 0 ? -1.4 : 1.6}
+              tall={false}
+              onOpen={onOpen}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

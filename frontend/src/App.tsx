@@ -11,10 +11,10 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 14, rotate: 0.2 }}
-        animate={{ opacity: 1, y: 0, rotate: 0 }}
-        exit={{ opacity: 0, y: -10, rotate: -0.1 }}
-        transition={{ duration: 0.38, ease: [0.32, 0.72, 0, 1] }}
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <Routes location={location}>
           <Route path="/" element={<HomePage />} />

@@ -1,20 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronRight, Camera, Shuffle, BookmarkPlus } from "lucide-react";
 import { api } from "@/api";
 import type { HomeData } from "@/types";
-import { formatDiaryDate } from "@/utils";
+import { formatFolioDate } from "@/utils";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
-import { KeywordChip } from "@/components/ui/KeywordChip";
-import { PolaroidCard } from "@/components/ui/PolaroidCard";
+import { GarmentPlate, pickShape } from "@/components/ui/GarmentPlate";
+import { ArchivePlate } from "@/components/ui/ArchivePlate";
 import { StampSeal } from "@/components/ui/StampSeal";
-import { SpecimenImage } from "@/components/ui/SpecimenImage";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { haptic } from "@/haptics";
 
-const EASE_OUT = [0.25, 0.46, 0.45, 0.94] as const;
+const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 export default function HomePage() {
   const [data, setData] = useState<HomeData | null>(null);
@@ -37,9 +35,7 @@ export default function HomePage() {
       inspiration: inspirationRef,
     };
     const el = map[target]?.current;
-    if (el) {
-      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
-    }
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     window.history.replaceState({}, "");
   }, [location.state]);
 
@@ -48,214 +44,217 @@ export default function HomePage() {
   const { masthead, mood, today_outfit, style_keywords, recent_collections, ai_recommendation } = data;
 
   return (
-    <div className="relative mx-auto max-w-md px-6 pb-36 pt-8">
-      <ThemeToggle className="absolute right-6 top-2 z-10" />
-      <PageIntro vol={masthead.vol} />
-      <SectionDiary mood={mood} containerRef={diaryRef} />
-      <SectionOutfit outfit={today_outfit} containerRef={outfitRef} onNavigate={(id) => navigate(`/item/${id}`)} />
-      <SectionKeywords keywords={style_keywords} />
-      <SectionCollections items={recent_collections} onViewAll={() => navigate("/wardrobe")} onOpen={(id) => navigate(`/item/${id}`)} />
-      <SectionAI recommendation={ai_recommendation} containerRef={inspirationRef} />
+    <div className="relative mx-auto max-w-md px-7 pb-40 pt-9">
+      <ThemeToggle className="absolute right-6 top-3 z-10" />
+      <Masthead vol={masthead.vol} />
+
+      <TodayDiary mood={mood} today={masthead.date} containerRef={diaryRef} />
+
+      <TodayOutfit outfit={today_outfit} containerRef={outfitRef} onOpen={(id) => navigate(`/item/${id}`)} />
+
+      <StyleLine keywords={style_keywords} />
+
+      <RecentArchive
+        items={recent_collections}
+        onViewAll={() => navigate("/wardrobe")}
+        onOpen={(id) => navigate(`/item/${id}`)}
+      />
+
+      <TodayEdit recommendation={ai_recommendation} containerRef={inspirationRef} />
 
       <motion.footer
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="mt-14 text-center"
+        className="mt-20 text-center"
       >
-        <p className="font-serif text-2xl text-ink-faint/60">My Style Diary</p>
-        <FolioText className="mt-2">Vol.{masthead.vol} · 只属于我的时尚册</FolioText>
+        <div className="editorial-rule mx-auto mb-6 w-2/3" />
+        <p className="font-serif text-lg text-ink-faint/70">MY STYLE DIARY</p>
+        <FolioText className="mt-1.5">VOL.{masthead.vol} · 一本只属于你的时尚册</FolioText>
       </motion.footer>
     </div>
   );
 }
 
-/* ---------- 刊头 ---------- */
-function PageIntro({ vol }: { vol: number }) {
+/* ---------- 刊头：杂志开篇 ---------- */
+function Masthead({ vol }: { vol: number }) {
   return (
     <motion.header
-      initial={{ opacity: 0, y: -12 }}
+      initial={{ opacity: 0, y: -14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: EASE_OUT }}
-      className="relative mb-6 text-center"
+      transition={{ duration: 0.7, ease: EASE }}
+      className="relative"
     >
-      <span className="absolute left-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
-        ✦ 收藏册
-      </span>
-      <span className="absolute right-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
-        VOL.{vol}
-      </span>
-      <p className="font-folio tracking-[0.3em] text-ink-faint">MY STYLE DIARY</p>
-      <h1 className="mt-2 font-serif text-hero text-ink">我的衣橱</h1>
-      <FolioText className="mt-2 block">
-        第 {new Date().getDate()} 天 · 收藏这件事
-      </FolioText>
-      <TornDivider label="TODAY" note="新的一天，新的自己" />
+      <div className="flex items-baseline justify-between">
+        <FolioText>✦ PERSONAL FASHION ARCHIVE</FolioText>
+        <FolioText>VOL.{vol}</FolioText>
+      </div>
+      <h1 className="mt-5 font-serif text-[52px] leading-[1.05] text-ink">我的衣橱</h1>
+      <div className="mt-3 flex items-baseline justify-between">
+        <FolioText>AUGUST · ARCHIVE NO.{vol}</FolioText>
+        <span className="font-hand text-sm text-ink-faint">只属于我的时尚册</span>
+      </div>
+      <TornDivider label="OPENING" />
     </motion.header>
   );
 }
 
-/* ---------- 今日心情（索引卡） ---------- */
-function SectionDiary({
+/* ---------- 今日手记：无卡片的手写批注 ---------- */
+function TodayDiary({
   mood,
+  today,
   containerRef,
 }: {
   mood: HomeData["mood"];
+  today: string;
   containerRef: React.RefObject<HTMLDivElement>;
 }) {
   return (
     <motion.section
       ref={containerRef}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.6, ease: EASE_OUT }}
-      className="mb-8"
+      transition={{ duration: 0.6, ease: EASE }}
+      className="scroll-mt-24 py-6"
     >
-      <div className="flex items-center gap-3 rounded-lg bg-paper-soft p-4 shadow-1">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-wash text-2xl">
-          {mood.emoji}
-        </div>
-        <div className="flex-1">
-          <p className="font-hand text-lg text-ink">{mood.word}</p>
-          <p className="text-caption text-ink-faint">{mood.note}</p>
-        </div>
-        <FolioText>心情·今日</FolioText>
+      <div className="flex items-baseline gap-3">
+        <FolioText>TODAY · {formatFolioDate(today)}</FolioText>
+        <span className="h-px flex-1 bg-edge/70" />
+        <span className="font-hand text-xs text-ink-faint">{mood.emoji}</span>
       </div>
+      <p className="mt-3 font-hand text-xl leading-relaxed text-ink">
+        {mood.word}，{mood.note}。
+      </p>
     </motion.section>
   );
 }
 
-/* ---------- 今日穿搭（Hero 封面卡） ---------- */
-function SectionOutfit({
+/* ---------- 今日穿搭：服装版画叠加，无框编辑构图 ---------- */
+function TodayOutfit({
   outfit,
   containerRef,
-  onNavigate,
+  onOpen,
 }: {
   outfit: HomeData["today_outfit"];
   containerRef: React.RefObject<HTMLDivElement>;
-  onNavigate: (id: number) => void;
+  onOpen: (id: number) => void;
 }) {
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
-  const bgY = useTransform(scrollYProgress, [0, 1], [30, -30]);
-  const dateY = useTransform(scrollYProgress, [0, 1], [12, -12]);
-  const cardY = useTransform(scrollYProgress, [0, 1], [18, -18]);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end start"] });
+  const plateY = useTransform(scrollYProgress, [0, 1], [18, -18]);
+  const textY = useTransform(scrollYProgress, [0, 1], [8, -8]);
+
+  if (!outfit) {
+    return (
+      <section ref={containerRef} className="relative h-[420px] scroll-mt-24">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          <span className="font-serif text-3xl text-ink-faint/50">—</span>
+          <p className="font-hand text-lg text-ink-soft">衣橱还空着，等你的第一件收藏</p>
+          <FolioText>FIRST COLLECTION</FolioText>
+        </div>
+      </section>
+    );
+  }
+
+  const [main, second] = outfit.items;
+  const tint = main?.color_hex ?? "#F3E9F2";
 
   return (
     <motion.section
       ref={containerRef}
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.7, ease: EASE_OUT }}
-      className="mb-8 scroll-mt-24"
+      transition={{ duration: 0.7, ease: EASE }}
+      className="relative scroll-mt-24 py-4"
     >
-      {outfit ? (
-        <div className="relative overflow-hidden rounded-xl bg-paper-soft shadow-hero">
-          <div className="relative h-[460px] w-full">
-            <motion.div
-              className="absolute inset-0"
-              style={{
-                y: bgY,
-                background: `linear-gradient(160deg, ${outfit.items[0]?.color_hex ?? "#F3E9F2"} 0%, #E9B49B 42%, #C98A7A 74%, #B06F60 100%)`,
-              }}
-            />
+      {/* 画布：柔和色晕，非圆角框 */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          minHeight: 500,
+          background: `radial-gradient(120% 85% at 50% 28%, ${tint}44, transparent 72%), linear-gradient(180deg, rgb(var(--c-paper-deep)) 0%, rgb(var(--c-paper)) 100%)`,
+        }}
+      >
+        <span
+          className="pointer-events-none absolute inset-y-4 right-2 text-folio tracking-[0.3em] text-ink/25"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          LOOK 01 · {formatFolioDate(outfit.date)}
+        </span>
 
-            {/* 超大衬线日期（封面题字） */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.15 }}
-              style={{ y: dateY }}
-              className="absolute left-4 top-3 font-serif text-4xl leading-none text-ink/40"
-            >
-              {formatDiaryDate(outfit.date)}
-            </motion.p>
-
-            {/* 右侧竖排 VOL 小字 */}
-            <span
-              className="absolute right-3 top-4 text-folio tracking-[0.3em] text-ink/30"
-              style={{ writingMode: "vertical-rl" }}
-            >
-              MY STYLE DIARY
-            </span>
-
-            {/* 单品卡 */}
-            <motion.div style={{ y: cardY }} className="absolute inset-0 flex items-center justify-center">
-              <div className="flex gap-4">
-                {outfit.items.slice(0, 2).map((item, i) => (
-                  <motion.button
-                    key={item.id}
-                    onClick={() => onNavigate(item.id)}
-                    initial={{ opacity: 0, y: 28 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.25 + i * 0.16, ease: EASE_OUT }}
-                    whileHover={{ y: -6, rotate: i === 0 ? -1.5 : 1.5 }}
-                    className={`h-44 w-36 rounded-lg bg-paper-soft/95 p-2 shadow-2 ${
-                      i === 0 ? "rotate-[-3deg]" : "rotate-[2.5deg] translate-y-3"
-                    }`}
-                  >
-                    <SpecimenImage
-                      colorHex={item.color_hex}
-                      emoji={item.emoji}
-                      name={item.name}
-                      className="h-32 w-full rounded-md"
-                    />
-                    <p className="mt-1.5 truncate text-center font-hand text-xs text-ink">
-                      {item.name}
-                    </p>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* 底部压字 */}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 via-ink/60 to-transparent p-5 pt-24">
-              <div className="flex items-center gap-2 text-folio text-paper-soft/70">
-                <span>{outfit.weather}</span>
-                <span>·</span>
-                <span>{outfit.occasion}</span>
-              </div>
-              <h2 className="mt-1.5 font-serif text-title leading-snug text-paper-soft">
-                「{outfit.title}」
-              </h2>
-              <p className="mt-2 font-hand text-caption text-paper-soft/85">
-                {outfit.note}
-              </p>
+        {/* 服装版画叠加 */}
+        <motion.div style={{ y: plateY }} className="relative px-6 pb-24 pt-8">
+          <motion.button
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
+            onClick={() => main && onOpen(main.id)}
+            className="relative block w-[60%] -rotate-2"
+          >
+            <div className="washi-tape" aria-hidden />
+            <div className="bg-paper-soft px-4 pb-4 pt-4 shadow-plate" style={{ borderRadius: 2 }}>
+              {main && <GarmentPlate colorHex={main.color_hex} name={main.name} shape={pickShape(main)} className="aspect-[4/5] w-full" />}
             </div>
+            {main && (
+              <p className="mt-2 pl-1 font-hand text-[13px] text-ink-soft">{main.name}</p>
+            )}
+          </motion.button>
+
+          <motion.button
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
+            onClick={() => second && onOpen(second.id)}
+            className="absolute right-3 top-[52%] block w-[42%] rotate-[1.5deg]"
+          >
+            <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
+              {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
+            </div>
+          </motion.button>
+        </motion.div>
+
+        {/* 标题悬浮于版画之上 */}
+        <motion.div style={{ y: textY }} className="relative px-6 pb-7 pt-2">
+          <div className="flex items-baseline gap-2 text-folio text-ink-soft">
+            <span>{outfit.weather}</span>
+            <span>·</span>
+            <span>{outfit.occasion}</span>
+            <span className="ml-auto font-hand text-xs text-ink-faint">{formatFolioDate(outfit.date)}</span>
           </div>
-        </div>
-      ) : (
-        <div className="relative flex h-[360px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-edge bg-paper-soft">
-          <Camera size={32} strokeWidth={1.5} className="mb-3 text-ink-faint" />
-          <p className="font-hand text-lg text-ink-soft">衣橱还空着，等你的第一件收藏</p>
-          <FolioText className="mt-2">拍下今日穿搭</FolioText>
-        </div>
-      )}
+          <h2 className="mt-2 font-serif text-[34px] leading-[1.15] text-ink">「{outfit.title}」</h2>
+          <p className="mt-2 font-hand text-caption text-ink-soft">{outfit.note}</p>
+        </motion.div>
+      </div>
     </motion.section>
   );
 }
 
-/* ---------- 风格关键词 ---------- */
-function SectionKeywords({ keywords }: { keywords: string[] }) {
+/* ---------- 本周风格：一行编辑体文字 ---------- */
+function StyleLine({ keywords }: { keywords: string[] }) {
   return (
-    <section className="mb-8">
-      <TornDivider label="本周风格" note="今天的心情，都写在衣领上" />
-      <div className="mt-4 flex flex-wrap gap-2">
-        {keywords.map((kw, i) => (
-          <KeywordChip key={kw} label={kw} delay={i * 0.06} />
-        ))}
+    <motion.section
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="py-8"
+    >
+      <div className="flex items-baseline gap-3">
+        <FolioText>本周风格</FolioText>
+        <span className="h-px flex-1 bg-edge/70" />
       </div>
-    </section>
+      <p className="mt-3 font-serif text-h2 leading-relaxed text-ink">
+        {keywords.join(" · ")}
+      </p>
+    </motion.section>
   );
 }
 
-/* ---------- 最近收藏（拍立得墙） ---------- */
-function SectionCollections({
+/* ---------- 最近收藏：错落档案墙 ---------- */
+function RecentArchive({
   items,
   onViewAll,
   onOpen,
@@ -265,33 +264,38 @@ function SectionCollections({
   onOpen: (id: number) => void;
 }) {
   return (
-    <section className="mb-10">
+    <section className="pt-6">
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="mb-3 flex items-center justify-between"
+        className="flex items-baseline justify-between"
       >
-        <h3 className="font-serif text-h2 text-ink">最近收藏</h3>
-        <button onClick={onViewAll} className="flex items-center gap-0.5 text-folio text-ink-faint transition-colors hover:text-rose">
-          查看全部 <ChevronRight size={13} strokeWidth={1.5} />
+        <FolioText>RECENT ARCHIVE</FolioText>
+        <button onClick={onViewAll} className="text-folio text-ink-faint transition-colors hover:text-rose">
+          查看全部 →
         </button>
       </motion.div>
-      <div className="-mx-6 overflow-x-auto px-6 pb-4" style={{ scrollbarWidth: "none" }}>
-        <div className="flex gap-4">
-          {items.map((item, i) => (
-            <div key={item.id} className="w-[150px] shrink-0" onClick={() => onOpen(item.id)}>
-              <PolaroidCard item={item} rotate={i % 2 === 0 ? -1.5 : 1.2} delay={i * 0.08} index={i} />
-            </div>
-          ))}
-        </div>
+      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-6">
+        {items.slice(0, 6).map((item, i) => (
+          <div key={item.id} className={i % 2 === 1 ? "mt-9" : ""}>
+            <ArchivePlate
+              item={item}
+              index={i}
+              rotate={i % 2 === 0 ? -1.6 : 1.3}
+              tall={i % 2 === 0}
+              tape={i === 0 || i === 4}
+              onOpen={onOpen}
+            />
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
-/* ---------- AI 今日灵感（票根卡） ---------- */
-function SectionAI({
+/* ---------- TODAY'S EDIT（AI 在幕后） ---------- */
+function TodayEdit({
   recommendation,
   containerRef,
 }: {
@@ -299,121 +303,93 @@ function SectionAI({
   containerRef: React.RefObject<HTMLDivElement>;
 }) {
   const [rec, setRec] = useState(recommendation);
-  const [shaking, setShaking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const regenerate = async () => {
-    if (shaking || loading) return;
-    setShaking(true);
+    if (loading) return;
     setLoading(true);
     try {
       const next = await api.aiRecommend();
-      setTimeout(() => setRec(next), 380);
+      setTimeout(() => setRec(next), 420);
     } finally {
-      setTimeout(() => {
-        setShaking(false);
-        setLoading(false);
-      }, 620);
+      setTimeout(() => setLoading(false), 700);
     }
   };
+
+  const [main, second] = rec.combo;
 
   return (
     <motion.section
       ref={containerRef}
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.6, ease: EASE_OUT }}
-      className="scroll-mt-24"
+      transition={{ duration: 0.6, ease: EASE }}
+      className="scroll-mt-24 pt-10"
     >
-      <TornDivider label="今日灵感" note="摇一摇，看看另一种可能" />
-      <motion.div
-        animate={shaking ? { rotate: [0, -2, 2, -2, 2, 0], x: [0, -4, 4, -4, 4, 0] } : {}}
-        transition={{ duration: 0.5 }}
-        className="relative mt-4 rounded-lg border border-edge/70 bg-paper-soft p-5 pb-6 shadow-1"
-      >
-        <div className="ticket-notch -left-2 top-1/2 -translate-y-1/2" />
-        <div className="ticket-notch -right-2 top-1/2 -translate-y-1/2" />
+      <div className="flex items-baseline justify-between">
+        <FolioText>TODAY'S EDIT</FolioText>
+        <button onClick={regenerate} className="text-folio text-ink-faint transition-colors hover:text-ink">
+          {loading ? "翻纸中…" : "换个方向"}
+        </button>
+      </div>
+      <div className="editorial-rule mt-3 w-1/2" />
 
-        <div className="flex items-center justify-between">
-          <FolioText>AI · 搭配灵感</FolioText>
-          <button
-            onClick={regenerate}
-            className="flex items-center gap-1 text-folio text-rose transition-colors hover:text-rose-deep"
-          >
-            <Shuffle size={13} strokeWidth={1.5} /> 换一套
-          </button>
+      {loading ? (
+        <div className="py-10">
+          <p className="font-hand text-caption text-ink-faint">正在翻纸，寻找另一种可能…</p>
         </div>
+      ) : (
+        <div className="mt-5">
+          <p className="max-w-[85%] font-serif text-h2 leading-relaxed text-ink">
+            「{rec.reason}」
+          </p>
+          <p className="mt-1.5 text-folio text-ink-faint">{rec.context}</p>
 
-        <div className="mt-3 flex min-h-[72px] items-center gap-3">
-          {loading ? (
-            <div className="flex w-full items-center justify-center gap-3 rounded-md bg-paper-deep/60 py-3">
-              <motion.span
-                animate={{ rotate: [0, -90, 90, 0] }}
-                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                className="text-ink-faint"
-              >
-                🍃
-              </motion.span>
-              <p className="font-hand text-caption text-ink-faint">正在翻纸，寻找新的灵感…</p>
-            </div>
-          ) : (
-            <>
-              {rec.combo.map((item) => (
-                <div key={item.id} className="relative">
-                  <div className="h-20 w-16 rounded-md bg-paper-deep p-1">
-                    <SpecimenImage colorHex={item.color_hex} emoji={item.emoji} name={item.name} className="h-full w-full rounded-sm" />
-                  </div>
-                  <p className="mt-1 max-w-[64px] truncate text-center text-folio text-ink-faint">{item.name}</p>
-                </div>
-              ))}
-              <div className="ml-2 flex-1">
-                <p className="font-serif text-h2 text-ink">「{rec.reason}」</p>
-                <p className="mt-1 text-caption text-ink-faint">{rec.context}</p>
+          {/* 版画叠加 */}
+          <div className="relative mt-6 h-[320px]">
+            <button onClick={() => main && console.log(main.id)} className="absolute left-0 top-0 w-[52%] -rotate-2">
+              <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
+                {main && <GarmentPlate colorHex={main.color_hex} name={main.name} shape={pickShape(main)} className="aspect-[4/5] w-full" />}
               </div>
-            </>
-          )}
-        </div>
+              {main && <p className="mt-2 pl-1 font-hand text-xs text-ink-soft">{main.name}</p>}
+            </button>
+            <button onClick={() => second && console.log(second.id)} className="absolute right-0 top-16 w-[40%] rotate-[1.5deg]">
+              <div className="bg-paper-soft px-2.5 pb-2.5 pt-2.5 shadow-plate" style={{ borderRadius: 2 }}>
+                {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
+              </div>
+            </button>
+            <span className="absolute bottom-0 right-1 font-hand text-[13px] text-ink-faint">curated, not random</span>
+          </div>
 
-        <div className="mt-4 border-t border-dashed border-edge pt-3 text-center">
           <button
             onClick={() => {
               haptic.stamp();
               setSaved(true);
               setTimeout(() => setSaved(false), 1600);
             }}
-            className="flex items-center gap-1.5 rounded-full bg-rose px-5 py-2 text-caption text-paper-soft shadow-2 transition-transform hover:scale-[1.02] active:scale-95"
+            className="group relative mt-8 inline-flex items-center gap-2"
           >
-            <BookmarkPlus size={14} strokeWidth={1.5} /> 这套不错，记下来
+            <span className="border-b border-ink pb-1 text-folio tracking-[0.22em] text-ink transition-colors group-hover:text-rose-deep">
+              SAVE THIS LOOK
+            </span>
+            <StampSeal show={saved} />
           </button>
-          <StampSeal show={saved} />
         </div>
-      </motion.div>
+      )}
     </motion.section>
   );
 }
 
-/* ---------- 加载骨架（纸面占位） ---------- */
+/* ---------- 加载骨架：纸面占位 ---------- */
 function HomeSkeleton() {
   return (
-    <div className="mx-auto max-w-md px-6 pb-36 pt-8">
-      <div className="mb-6 text-center">
-        <div className="mx-auto h-3 w-40 animate-pulse rounded bg-edge" />
-        <div className="mx-auto mt-3 h-9 w-48 animate-pulse rounded bg-edge/80" />
-      </div>
-      <div className="mb-8 h-20 animate-pulse rounded-lg bg-paper-deep" />
-      <div className="relative mb-8 flex h-[420px] items-center justify-center rounded-xl border-2 border-dashed border-edge bg-paper-deep/40">
-        <div className="text-center">
-          <div className="mx-auto h-3 w-24 animate-pulse rounded bg-edge" />
-          <p className="mt-3 font-hand text-caption text-ink-faint">正在冲印今日穿搭…</p>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-8 w-16 animate-pulse rounded-full bg-paper-deep" />
-        ))}
-      </div>
+    <div className="mx-auto max-w-md px-7 pb-40 pt-9">
+      <div className="h-3 w-44 animate-pulse bg-edge/70" />
+      <div className="mt-5 h-12 w-2/3 animate-pulse bg-edge/60" />
+      <div className="mt-8 h-16 animate-pulse bg-edge/50" />
+      <div className="mt-6 h-[500px] animate-pulse bg-paper-deep" />
     </div>
   );
 }

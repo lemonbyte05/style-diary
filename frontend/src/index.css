@@ -4,50 +4,48 @@
 
 @layer base {
   :root {
-    --c-paper: 246 241 232;
-    --c-paper-deep: 239 231 218;
-    --c-paper-soft: 253 250 243;
-    --c-edge: 229 220 203;
-    --c-ink: 51 44 37;
-    --c-ink-soft: 108 95 83;
-    --c-ink-faint: 156 142 128;
-    --c-rose: 201 138 122;
-    --c-rose-deep: 176 111 96;
-    --c-rose-wash: 243 228 222;
+    --c-paper: 247 242 233;
+    --c-paper-deep: 241 234 219;
+    --c-paper-soft: 255 253 248;
+    --c-edge: 229 220 199;
+    --c-ink: 48 40 33;
+    --c-ink-soft: 110 95 80;
+    --c-ink-faint: 166 143 122;
+    --c-rose: 213 144 128;
+    --c-rose-deep: 188 111 92;
+    --c-rose-wash: 235 203 198;
+    --c-sage: 167 170 148;
     --c-peach: 233 180 155;
     --c-lavender: 183 165 196;
     --c-dustyblue: 157 178 196;
-    --c-sage: 166 179 159;
     --c-butter: 216 190 141;
-    --sh-1: 0 1px 12px rgba(51, 44, 37, 0.06);
-    --sh-2: 0 2px 16px rgba(51, 44, 37, 0.08);
-    --sh-3: 0 8px 32px rgba(51, 44, 37, 0.1);
-    --sh-hero: 0 12px 48px rgba(51, 44, 37, 0.14);
-    --sh-polaroid: 0 4px 10px rgba(51, 44, 37, 0.08), 0 1px 4px rgba(51, 44, 37, 0.05);
+    --sh-1: 0 1px 10px rgba(48, 40, 33, 0.05);
+    --sh-2: 0 2px 18px rgba(48, 40, 33, 0.07);
+    --sh-3: 0 10px 40px rgba(48, 40, 33, 0.09);
+    --sh-plate: 0 14px 34px -12px rgba(48, 40, 33, 0.18);
   }
 
   /* 夜间：纸面变深（设计系统深色纸面） */
   [data-theme="dark"] {
-    --c-paper: 34 30 26;
-    --c-paper-deep: 43 38 33;
-    --c-paper-soft: 51 45 39;
-    --c-edge: 58 51 43;
+    --c-paper: 26 22 19;
+    --c-paper-deep: 41 35 30;
+    --c-paper-soft: 35 30 26;
+    --c-edge: 58 50 42;
     --c-ink: 240 231 219;
     --c-ink-soft: 201 187 168;
-    --c-ink-faint: 138 124 108;
-    --c-rose: 208 154 140;
-    --c-rose-deep: 196 133 118;
-    --c-rose-wash: 58 43 38;
+    --c-ink-faint: 150 133 112;
+    --c-rose: 213 144 128;
+    --c-rose-deep: 199 130 115;
+    --c-rose-wash: 60 46 40;
+    --c-sage: 167 170 148;
     --c-peach: 201 158 137;
     --c-lavender: 158 142 174;
     --c-dustyblue: 133 153 168;
-    --c-sage: 143 155 137;
     --c-butter: 190 164 121;
-    --sh-1: 0 1px 12px rgba(0, 0, 0, 0.35);
-    --sh-2: 0 2px 16px rgba(0, 0, 0, 0.4);
-    --sh-3: 0 8px 32px rgba(0, 0, 0, 0.45);
-    --sh-hero: 0 12px 48px rgba(0, 0, 0, 0.5);
-    --sh-polaroid: 0 4px 10px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
+    --sh-1: 0 1px 10px rgba(0, 0, 0, 0.32);
+    --sh-2: 0 2px 18px rgba(0, 0, 0, 0.38);
+    --sh-3: 0 10px 40px rgba(0, 0, 0, 0.45);
+    --sh-plate: 0 16px 40px -12px rgba(0, 0, 0, 0.55);
   }
 
   html {
@@ -57,7 +55,10 @@
 
   body {
     @apply bg-paper text-ink font-sans;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    /* 纸纹 + 亚麻织理，双材质叠加，透明度极低 */
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Cpath d='M0 1h4M0 3h4' stroke='%23302821' stroke-opacity='0.018' stroke-width='0.5'/%3E%3C/svg%3E");
   }
 
   ::selection {
@@ -72,7 +73,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(51, 44, 37, 0.18);
+    background: rgba(48, 40, 33, 0.16);
     border-radius: 8px;
   }
 }
@@ -81,21 +82,22 @@
   /* 首字下沉（杂志编辑体） */
   .drop-cap::first-letter {
     float: left;
-    padding: 2px 8px 0 0;
+    padding: 3px 8px 0 0;
     font-family: 'Songti SC', 'Noto Serif SC', serif;
-    font-size: 3.2em;
+    font-size: 3.4em;
     line-height: 0.9;
     color: rgb(var(--c-rose-deep));
   }
 
-  /* 票根缺口 */
-  .ticket-notch {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    background: rgb(var(--c-paper));
-    box-shadow: inset 0 0 0 1px rgb(var(--c-edge));
+  /* 编辑部细线（页眉/页脚规则） */
+  .editorial-rule {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      rgb(var(--c-edge)) 0%,
+      rgb(var(--c-edge)) 40%,
+      transparent 100%
+    );
   }
 
   /* 装订孔（收藏册打孔） */
@@ -104,21 +106,21 @@
     height: 7px;
     border-radius: 999px;
     background: rgb(var(--c-paper));
-    box-shadow: inset 0 0 0 1px rgba(229, 220, 203, 0.95);
+    box-shadow: inset 0 0 0 1px rgba(229, 220, 199, 0.8);
   }
 
   /* 和纸胶带 */
   .washi-tape {
     position: absolute;
-    top: -9px;
+    top: -10px;
     left: 50%;
     transform: translateX(-50%) rotate(-3deg);
-    width: 84px;
-    height: 18px;
-    background: linear-gradient(135deg, rgba(183, 165, 196, 0.55), rgba(216, 190, 141, 0.5));
+    width: 86px;
+    height: 20px;
+    background: linear-gradient(135deg, rgba(213, 144, 128, 0.32), rgba(167, 170, 148, 0.32));
     backdrop-filter: blur(1px);
-    box-shadow: 0 1px 3px rgba(51, 44, 37, 0.08);
-    border-left: 1px dashed rgba(51, 44, 37, 0.08);
-    border-right: 1px dashed rgba(51, 44, 37, 0.08);
+    box-shadow: 0 1px 3px rgba(48, 40, 33, 0.08);
+    border-left: 1px dashed rgba(48, 40, 33, 0.1);
+    border-right: 1px dashed rgba(48, 40, 33, 0.1);
   }
 }

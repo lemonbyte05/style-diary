@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Shirt, Sparkles, User, Camera, Plus } from "lucide-react";
+import { Shirt, Sparkles, User, Plus } from "lucide-react";
 
-const TAB_ITEMS = [
+const LEFT_TABS = [
   { to: "/wardrobe", label: "衣橱", icon: Shirt, state: undefined },
-  { to: "/", label: "穿搭", icon: Camera, state: { scrollTo: "outfit" } },
+  { to: "/", label: "LOOK", icon: null, state: { scrollTo: "outfit" } },
 ] as const;
 
-const SIDE_ITEMS = [
-  { to: "/", label: "灵感", icon: Sparkles, state: { scrollTo: "inspiration" } },
+const RIGHT_TABS = [
+  { to: "/", label: "EDIT", icon: Sparkles, state: { scrollTo: "inspiration" } },
   { to: "/", label: "我的", icon: User, state: { scrollTo: "diary" } },
 ] as const;
 
@@ -22,85 +22,53 @@ export function TabBar() {
   const { pathname } = useLocation();
 
   const go = (item: { to: string; state?: object; label: string }) => {
-    if (item.state) {
-      navigate(item.to, { state: item.state });
-    } else {
-      navigate(item.to);
-    }
+    if (item.state) navigate(item.to, { state: item.state });
+    else navigate(item.to);
+  };
+
+  const renderItem = (tab: { to: string; label: string; icon: typeof Shirt | null; state?: object }) => {
+    const Icon = tab.icon;
+    const active = isActive(tab.to, pathname);
+    return (
+      <button
+        key={tab.label}
+        onClick={() => go(tab)}
+        className="relative flex flex-1 flex-col items-center gap-1 py-1"
+      >
+        {active && <span className="absolute -top-[13px] h-[3px] w-6 bg-rose" />}
+        {Icon ? (
+          <Icon size={17} strokeWidth={1.25} className={active ? "text-ink" : "text-ink-faint"} />
+        ) : (
+          <span className={`text-folio ${active ? "text-ink" : "text-ink-faint"}`}>LOOK</span>
+        )}
+        <span className={`text-folio ${active ? "text-ink" : "text-ink-faint"}`}>{tab.label}</span>
+      </button>
+    );
   };
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40">
-      <div className="mx-auto max-w-md px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
-        <motion.div
-          initial={{ y: 80, opacity: 0 }}
+      <div className="mx-auto max-w-md">
+        <motion.nav
+          initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: [0.32, 0.72, 0, 1] }}
-          className="relative flex items-center justify-around rounded-full bg-paper-soft/90 px-2 py-2 shadow-3 backdrop-blur-md"
-          style={{ border: "1px solid rgba(229,220,203,0.8)" }}
+          transition={{ duration: 0.55, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="relative flex items-center border-t border-edge/60 bg-paper/90 px-7 pb-[max(env(safe-area-inset-bottom),10px)] pt-2 backdrop-blur-sm"
         >
-          {TAB_ITEMS.map((tab) => {
-            const Icon = tab.icon;
-            const active = isActive(tab.to, pathname);
-            return (
-              <button
-                key={tab.label}
-                onClick={() => go(tab)}
-                className="relative flex flex-col items-center gap-0.5 px-4 py-1"
-              >
-                {active && (
-                  <motion.span
-                    layoutId="tab-marker"
-                    className="absolute -top-1 h-1 w-6 rounded-full bg-rose"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-                <Icon
-                  size={18}
-                  strokeWidth={1.5}
-                  className={active ? "text-ink" : "text-ink-faint"}
-                />
-                <span
-                  className={`text-folio ${active ? "text-ink" : "text-ink-faint"}`}
-                >
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
+          {renderItem(LEFT_TABS[0])}
+          {renderItem({ ...LEFT_TABS[1], icon: null })}
 
-          {/* 中央 FAB：花瓣式 */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.92 }}
+          {/* 中央记录：更小的点 */}
+          <button
             onClick={() => go({ to: "/", state: { scrollTo: "outfit" }, label: "记录" })}
-            className="relative -mt-10 flex h-14 w-14 items-center justify-center rounded-full bg-rose shadow-hero"
             aria-label="记录"
+            className="relative -top-5 mx-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose text-paper-soft shadow-2 transition-transform hover:scale-105 active:scale-95"
           >
-            <span className="absolute inset-0 rounded-full bg-rose" aria-hidden />
-            <motion.span
-              animate={{ rotate: [0, 8, -8, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 4 }}
-              className="relative"
-            >
-              <Plus size={24} strokeWidth={1.5} className="text-paper-soft" />
-            </motion.span>
-          </motion.button>
+            <Plus size={18} strokeWidth={1.4} />
+          </button>
 
-          {SIDE_ITEMS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.label}
-                onClick={() => go(tab)}
-                className="flex flex-col items-center gap-0.5 px-4 py-1"
-              >
-                <Icon size={18} strokeWidth={1.5} className="text-ink-faint" />
-                <span className="text-folio text-ink-faint">{tab.label}</span>
-              </button>
-            );
-          })}
-        </motion.div>
+          {RIGHT_TABS.map((t) => renderItem(t))}
+        </motion.nav>
       </div>
     </div>
   );

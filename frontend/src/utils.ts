@@ -26,3 +26,20 @@ export function formatInkDate(iso: string): { year: string; month: string } {
     .join("");
   return { year, month: MONTHS[(m ?? 1) - 1] };
 }
+
+/** 将 hex 颜色按因子变深/变浅，用于服装版画描边与压暗 */
+export function shade(hex: string, factor: number): string {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+  const r = Math.round(((n >> 16) & 255) * factor);
+  const g = Math.round(((n >> 8) & 255) * factor);
+  const b = Math.round((n & 255) * factor);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+/** "2026-08-13" → "AUG 13"（英文杂志日期） */
+export function formatFolioDate(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  return `${months[(m ?? 1) - 1]} ${String(d ?? 1).padStart(2, "0")}`;
+}
