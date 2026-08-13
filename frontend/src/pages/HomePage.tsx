@@ -54,6 +54,7 @@ export default function HomePage() {
         items={recent_collections}
         onViewAll={() => navigate("/wardrobe")}
         onOpen={(id) => navigate(`/item/${id}`)}
+        onAdd={() => navigate("/add")}
       />
 
       <motion.footer
@@ -104,10 +105,12 @@ function RecentArchive({
   items,
   onViewAll,
   onOpen,
+  onAdd,
 }: {
   items: HomeData["recent_collections"];
   onViewAll: () => void;
   onOpen: (id: number) => void;
+  onAdd: () => void;
 }) {
   return (
     <section className="pt-8">
@@ -118,24 +121,45 @@ function RecentArchive({
         className="flex items-baseline justify-between"
       >
         <FolioText>RECENT ARCHIVE</FolioText>
-        <button onClick={onViewAll} className="text-folio text-ink-faint transition-colors hover:text-rose">
-          查看全部 →
-        </button>
+        {items.length > 0 && (
+          <button onClick={onViewAll} className="text-folio text-ink-faint transition-colors hover:text-rose">
+            查看全部 →
+          </button>
+        )}
       </motion.div>
-      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-6">
-        {items.slice(0, 6).map((item, i) => (
-          <div key={item.id} className={i % 2 === 1 ? "mt-9" : ""}>
-            <ArchivePlate
-              item={item}
-              index={i}
-              rotate={i % 2 === 0 ? -1.6 : 1.3}
-              tall={i % 2 === 0}
-              tape={i === 0 || i === 4}
-              onOpen={onOpen}
-            />
-          </div>
-        ))}
-      </div>
+      {items.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mt-5 flex flex-col items-center gap-3 border border-dashed border-edge py-16 text-center"
+          style={{ borderRadius: 2 }}
+        >
+          <span className="font-serif text-3xl text-ink-faint/50">＋</span>
+          <p className="font-hand text-lg text-ink-soft">衣橱还空着，等你的第一件收藏</p>
+          <button
+            onClick={onAdd}
+            className="border-b border-ink pb-0.5 text-folio tracking-[0.2em] text-ink transition-colors hover:text-rose-deep"
+          >
+            去入册一件 →
+          </button>
+        </motion.div>
+      ) : (
+        <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-6">
+          {items.slice(0, 6).map((item, i) => (
+            <div key={item.id} className={i % 2 === 1 ? "mt-9" : ""}>
+              <ArchivePlate
+                item={item}
+                index={i}
+                rotate={i % 2 === 0 ? -1.6 : 1.3}
+                tall={i % 2 === 0}
+                tape={i === 0 || i === 4}
+                onOpen={onOpen}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -86,7 +86,9 @@ export default function CombinePage() {
           <div className="relative mt-4 flex items-center justify-center" style={{ minHeight: 340 }}>
             {selectedItems.map((item, i) => {
               const n = selectedItems.length;
-              const offset = (i - (n - 1) / 2) * 40;
+              // 件数越多，偏移步长越小，保证版画始终落在可视区内
+              const step = Math.min(40, 198 / Math.max(n - 1, 1));
+              const offset = (i - (n - 1) / 2) * step;
               const left = `calc(50% - 88px + ${offset}px)`;
               const rot = (i - (n - 1) / 2) * 2.4;
               return (

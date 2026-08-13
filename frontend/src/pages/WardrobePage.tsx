@@ -17,6 +17,7 @@ export default function WardrobePage() {
   const [collectionId, setCollectionId] = useState<number | null>(null);
   const [creatingCol, setCreatingCol] = useState(false);
   const [newColName, setNewColName] = useState("");
+  const [delColId, setDelColId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -42,6 +43,19 @@ export default function WardrobePage() {
     await api.collectionCreate(name);
     setNewColName("");
     setCreatingCol(false);
+    loadCollections();
+  };
+
+  const removeCollection = async (id: number) => {
+    if (delColId !== id) {
+      setDelColId(id);
+      setTimeout(() => setDelColId(null), 4000);
+      return;
+    }
+    haptic.stamp();
+    await api.collectionDelete(id);
+    if (collectionId === id) setCollectionId(null);
+    setDelColId(null);
     loadCollections();
   };
 
@@ -149,6 +163,16 @@ export default function WardrobePage() {
               {c.name}
               <span className="text-ink-faint/60"> {c.count}</span>
             </button>
+            {collectionId === c.id && (
+              <button
+                onClick={() => removeCollection(c.id)}
+                className={`ml-1.5 text-caption transition-colors ${
+                  delColId === c.id ? "text-terra" : "text-ink-faint/60 hover:text-terra"
+                }`}
+              >
+                {delColId === c.id ? "确认删?" : "✕"}
+              </button>
+            )}
           </span>
         ))}
         {creatingCol ? (

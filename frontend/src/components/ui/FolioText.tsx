@@ -7,7 +7,7 @@ export function FolioText({
   className?: string;
 }) {
   return (
-    <span className={`font-folio uppercase tracking-[0.08em] text-ink-faint ${className}`}>
+    <span className={`font-sans uppercase tracking-[0.08em] text-ink-faint ${className}`}>
       {children}
     </span>
   );
