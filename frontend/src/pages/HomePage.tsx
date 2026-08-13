@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight, Camera, Shuffle, BookmarkPlus } from "lucide-react";
 import { api } from "@/api";
@@ -47,7 +47,7 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-md px-6 pb-36 pt-8">
-      <PageIntro />
+      <PageIntro vol={masthead.vol} />
       <SectionDiary mood={mood} containerRef={diaryRef} />
       <SectionOutfit outfit={today_outfit} containerRef={outfitRef} onNavigate={(id) => navigate(`/item/${id}`)} />
       <SectionKeywords keywords={style_keywords} />
@@ -68,14 +68,20 @@ export default function HomePage() {
 }
 
 /* ---------- 刊头 ---------- */
-function PageIntro() {
+function PageIntro({ vol }: { vol: number }) {
   return (
     <motion.header
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: EASE_OUT }}
-      className="mb-6 text-center"
+      className="relative mb-6 text-center"
     >
+      <span className="absolute left-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
+        ✦ 收藏册
+      </span>
+      <span className="absolute right-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
+        VOL.{vol}
+      </span>
       <p className="font-folio tracking-[0.3em] text-ink-faint">MY STYLE DIARY</p>
       <h1 className="mt-2 font-serif text-hero text-ink">我的衣橱</h1>
       <FolioText className="mt-2 block">
@@ -127,6 +133,14 @@ function SectionOutfit({
   containerRef: React.RefObject<HTMLDivElement>;
   onNavigate: (id: number) => void;
 }) {
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  });
+  const bgY = useTransform(scrollYProgress, [0, 1], [30, -30]);
+  const dateY = useTransform(scrollYProgress, [0, 1], [12, -12]);
+  const cardY = useTransform(scrollYProgress, [0, 1], [18, -18]);
+
   return (
     <motion.section
       ref={containerRef}
@@ -139,9 +153,10 @@ function SectionOutfit({
       {outfit ? (
         <div className="relative overflow-hidden rounded-xl bg-paper-soft shadow-hero">
           <div className="relative h-[460px] w-full">
-            <div
+            <motion.div
               className="absolute inset-0"
               style={{
+                y: bgY,
                 background: `linear-gradient(160deg, ${outfit.items[0]?.color_hex ?? "#F3E9F2"} 0%, #E9B49B 42%, #C98A7A 74%, #B06F60 100%)`,
               }}
             />
@@ -151,6 +166,7 @@ function SectionOutfit({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.15 }}
+              style={{ y: dateY }}
               className="absolute left-4 top-3 font-serif text-4xl leading-none text-ink/40"
             >
               {formatDiaryDate(outfit.date)}
@@ -165,7 +181,7 @@ function SectionOutfit({
             </span>
 
             {/* 单品卡 */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <motion.div style={{ y: cardY }} className="absolute inset-0 flex items-center justify-center">
               <div className="flex gap-4">
                 {outfit.items.slice(0, 2).map((item, i) => (
                   <motion.button
@@ -192,7 +208,7 @@ function SectionOutfit({
                   </motion.button>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* 底部压字 */}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 via-ink/60 to-transparent p-5 pt-24">
@@ -281,16 +297,21 @@ function SectionAI({
 }) {
   const [rec, setRec] = useState(recommendation);
   const [shaking, setShaking] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const regenerate = async () => {
-    if (shaking) return;
+    if (shaking || loading) return;
     setShaking(true);
+    setLoading(true);
     try {
       const next = await api.aiRecommend();
-      setTimeout(() => setRec(next), 350);
+      setTimeout(() => setRec(next), 380);
     } finally {
-      setTimeout(() => setShaking(false), 600);
+      setTimeout(() => {
+        setShaking(false);
+        setLoading(false);
+      }, 620);
     }
   };
 
@@ -323,19 +344,34 @@ function SectionAI({
           </button>
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
-          {rec.combo.map((item) => (
-            <div key={item.id} className="relative">
-              <div className="h-20 w-16 rounded-md bg-paper-deep p-1">
-                <SpecimenImage colorHex={item.color_hex} emoji={item.emoji} name={item.name} className="h-full w-full rounded-sm" />
-              </div>
-              <p className="mt-1 max-w-[64px] truncate text-center text-folio text-ink-faint">{item.name}</p>
+        <div className="mt-3 flex min-h-[72px] items-center gap-3">
+          {loading ? (
+            <div className="flex w-full items-center justify-center gap-3 rounded-md bg-paper-deep/60 py-3">
+              <motion.span
+                animate={{ rotate: [0, -90, 90, 0] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="text-ink-faint"
+              >
+                🍃
+              </motion.span>
+              <p className="font-hand text-caption text-ink-faint">正在翻纸，寻找新的灵感…</p>
             </div>
-          ))}
-          <div className="ml-2 flex-1">
-            <p className="font-serif text-h2 text-ink">「{rec.reason}」</p>
-            <p className="mt-1 text-caption text-ink-faint">{rec.context}</p>
-          </div>
+          ) : (
+            <>
+              {rec.combo.map((item) => (
+                <div key={item.id} className="relative">
+                  <div className="h-20 w-16 rounded-md bg-paper-deep p-1">
+                    <SpecimenImage colorHex={item.color_hex} emoji={item.emoji} name={item.name} className="h-full w-full rounded-sm" />
+                  </div>
+                  <p className="mt-1 max-w-[64px] truncate text-center text-folio text-ink-faint">{item.name}</p>
+                </div>
+              ))}
+              <div className="ml-2 flex-1">
+                <p className="font-serif text-h2 text-ink">「{rec.reason}」</p>
+                <p className="mt-1 text-caption text-ink-faint">{rec.context}</p>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mt-4 border-t border-dashed border-edge pt-3 text-center">
@@ -364,7 +400,12 @@ function HomeSkeleton() {
         <div className="mx-auto mt-3 h-9 w-48 animate-pulse rounded bg-edge/80" />
       </div>
       <div className="mb-8 h-20 animate-pulse rounded-lg bg-paper-deep" />
-      <div className="mb-8 h-[420px] animate-pulse rounded-xl bg-paper-deep" />
+      <div className="relative mb-8 flex h-[420px] items-center justify-center rounded-xl border-2 border-dashed border-edge bg-paper-deep/40">
+        <div className="text-center">
+          <div className="mx-auto h-3 w-24 animate-pulse rounded bg-edge" />
+          <p className="mt-3 font-hand text-caption text-ink-faint">正在冲印今日穿搭…</p>
+        </div>
+      </div>
       <div className="flex gap-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-8 w-16 animate-pulse rounded-full bg-paper-deep" />

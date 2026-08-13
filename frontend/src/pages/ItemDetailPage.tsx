@@ -70,6 +70,11 @@ export default function ItemDetailPage() {
         transition={{ duration: 0.6, delay: 0.15 }}
         className="relative rounded-lg bg-paper-soft p-5 shadow-1"
       >
+        <div className="absolute -left-1 top-1/2 flex -translate-y-1/2 flex-col gap-4" aria-hidden>
+          <span className="punch-hole" />
+          <span className="punch-hole" />
+          <span className="punch-hole" />
+        </div>
         <div className="washi-tape" aria-hidden />
         <h1 className="font-serif text-title text-ink">「{item.name}」</h1>
         <div className="mt-1.5 flex items-center justify-between">

@@ -29,8 +29,14 @@ export default function WardrobePage() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
-        className="mb-5 text-center"
+        className="relative mb-5 text-center"
       >
+        <span className="absolute left-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
+          ✦ 收藏册
+        </span>
+        <span className="absolute right-0 top-1 text-folio tracking-[0.2em] text-ink-faint">
+          第 一 页
+        </span>
         <p className="font-folio tracking-[0.3em] text-ink-faint">WARDROBE</p>
         <h1 className="mt-2 font-serif text-title text-ink">我的衣橱</h1>
         <FolioText className="mt-1 block">{items.length} 件收藏 · 都是故事</FolioText>

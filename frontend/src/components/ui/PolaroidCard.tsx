@@ -33,8 +33,12 @@ export function PolaroidCard({
       <div className="washi-tape" aria-hidden />
       <Link
         to={`/item/${item.id}`}
-        className="block rounded-lg bg-paper-soft p-3 pb-4 shadow-polaroid transition-shadow duration-300 hover:shadow-2"
+        className="relative block rounded-lg bg-paper-soft p-3 pb-4 shadow-polaroid transition-shadow duration-300 hover:shadow-2"
       >
+        <span
+          className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-t-lg"
+          style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.55), transparent)" }}
+        />
         <SpecimenImage
           colorHex={item.color_hex}
           emoji={item.emoji}
