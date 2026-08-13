@@ -135,7 +135,10 @@ export default function ItemDetailPage() {
           加入搭配
         </motion.button>
         <span className="text-edge">/</span>
-        <button className="text-folio tracking-[0.22em] text-ink-faint transition-colors hover:text-ink">
+        <button
+          onClick={() => navigate(`/edit/${item.id}`)}
+          className="text-folio tracking-[0.22em] text-ink-faint transition-colors hover:text-ink"
+        >
           编辑
         </button>
       </div>

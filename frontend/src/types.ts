@@ -10,6 +10,7 @@ export interface Item {
   created_at: string;
   worn_count?: number;
   worn?: number;
+  collections?: number[];
   /** 去背景透明 PNG（未来真实服装图），缺省时回退到版画占位 */
   image_url?: string | null;
 }
@@ -21,6 +22,15 @@ export interface Look {
   title: string;
   note: string;
   items: Item[];
+}
+
+/** 我的收藏夹（自定义分组） */
+export interface Collection {
+  id: number;
+  name: string;
+  created_at: string;
+  item_ids: number[];
+  count: number;
 }
 
 export interface HomeData {

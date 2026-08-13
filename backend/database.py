@@ -35,6 +35,17 @@ def init_db() -> None:
                 item_ids TEXT NOT NULL DEFAULT '[]'
             );
 
+            CREATE TABLE IF NOT EXISTS collections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS collection_items (
+                collection_id INTEGER NOT NULL,
+                item_id INTEGER NOT NULL
+            );
+
             DROP TABLE IF EXISTS outfits;
             DROP TABLE IF EXISTS saved_looks;
             """

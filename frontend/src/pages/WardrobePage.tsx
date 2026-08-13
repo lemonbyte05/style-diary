@@ -1,28 +1,60 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { api } from "@/api";
-import type { Item } from "@/types";
+import type { Collection, Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
 import { ArchivePlate } from "@/components/ui/ArchivePlate";
+import { haptic } from "@/haptics";
 
 const CATEGORIES = ["全部", "上衣", "裙装", "外套", "配饰"];
 
 export default function WardrobePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [category, setCategory] = useState("全部");
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collectionId, setCollectionId] = useState<number | null>(null);
+  const [creatingCol, setCreatingCol] = useState(false);
+  const [newColName, setNewColName] = useState("");
   const [query, setQuery] = useState("");
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [showColMenu, setShowColMenu] = useState(false);
   const navigate = useNavigate();
 
+  const loadCollections = () => {
+    api.collections().then((r) => setCollections(r.collections));
+  };
+  useEffect(loadCollections, []);
+
   useEffect(() => {
-    api.items(category).then((res) => setItems(res.items));
-  }, [category]);
+    api.items({ category, collection_id: collectionId ?? undefined }).then((res) => setItems(res.items));
+  }, [category, collectionId]);
 
   const toggleSelect = (id: number) =>
     setSelectedIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const createCollection = async () => {
+    const name = newColName.trim();
+    if (!name) return;
+    haptic.tap();
+    await api.collectionCreate(name);
+    setNewColName("");
+    setCreatingCol(false);
+    loadCollections();
+  };
+
+  const addSelectedToCollection = async (cid: number) => {
+    haptic.stamp();
+    for (const id of selectedIds) {
+      await api.collectionAddItem(cid, id);
+    }
+    setSelectedIds([]);
+    setSelecting(false);
+    setShowColMenu(false);
+    loadCollections();
+  };
 
   const filtered = query
     ? items.filter((i) => i.name.includes(query) || i.tags.some((t) => t.includes(query)))
@@ -48,6 +80,7 @@ export default function WardrobePage() {
               onClick={() => {
                 setSelecting((s) => !s);
                 setSelectedIds([]);
+                setShowColMenu(false);
               }}
               className={`text-folio transition-colors ${selecting ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
             >
@@ -60,10 +93,9 @@ export default function WardrobePage() {
         <p className="mt-4 text-folio text-ink-faint">
           {items.length} PIECES / AUGUST ARCHIVE
         </p>
-        <p className="mt-2 font-hand text-sm text-ink-soft">每一件，都是某一段日子的收藏。</p>
       </motion.header>
 
-      {/* 发丝线搜索（非胶囊） */}
+      {/* 搜索 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -79,14 +111,10 @@ export default function WardrobePage() {
         />
       </motion.div>
 
-      {/* 分类：细线文字链接 */}
+      {/* 品类 */}
       <div className="mt-5 flex flex-wrap items-center">
         {CATEGORIES.map((c, i) => (
-          <button
-            key={c}
-            onClick={() => setCategory(c)}
-            className="flex items-center"
-          >
+          <button key={c} onClick={() => setCategory(c)} className="flex items-center">
             {i > 0 && <span className="mx-2 text-edge">·</span>}
             <span
               className={`text-caption transition-colors ${
@@ -99,20 +127,67 @@ export default function WardrobePage() {
         ))}
       </div>
 
+      {/* 我的收藏夹 */}
+      <div className="mt-4 flex flex-wrap items-center">
+        <button
+          onClick={() => setCollectionId(null)}
+          className={`text-caption transition-colors ${
+            collectionId === null ? "border-b border-rose-deep text-rose-deep" : "text-ink-faint hover:text-ink-soft"
+          }`}
+        >
+          全部
+        </button>
+        {collections.map((c) => (
+          <span key={c.id} className="flex items-center">
+            <span className="mx-2 text-edge">·</span>
+            <button
+              onClick={() => setCollectionId(c.id)}
+              className={`text-caption transition-colors ${
+                collectionId === c.id ? "border-b border-rose-deep text-rose-deep" : "text-ink-faint hover:text-ink-soft"
+              }`}
+            >
+              {c.name}
+              <span className="text-ink-faint/60"> {c.count}</span>
+            </button>
+          </span>
+        ))}
+        {creatingCol ? (
+          <span className="ml-3 flex items-center gap-1">
+            <input
+              autoFocus
+              value={newColName}
+              onChange={(e) => setNewColName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && createCollection()}
+              placeholder="收藏夹名字"
+              className="w-28 border-b border-ink bg-transparent pb-0.5 text-caption text-ink outline-none placeholder:text-ink-faint/60"
+            />
+            <button onClick={createCollection} className="text-caption text-rose-deep">
+              建
+            </button>
+          </span>
+        ) : (
+          <button
+            onClick={() => setCreatingCol(true)}
+            className="ml-3 flex items-center gap-0.5 text-caption text-ink-faint transition-colors hover:text-rose"
+          >
+            <Plus size={12} strokeWidth={1.4} /> 收藏夹
+          </button>
+        )}
+      </div>
+
       <div className="editorial-rule mt-7 w-full" />
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center py-24 text-center">
           <span className="font-serif text-3xl text-ink-faint/40">—</span>
-          <p className="mt-4 font-hand text-lg text-ink-soft">还没有找到，再想想别的关键词？</p>
-          <FolioText className="mt-2">OR START A NEW COLLECTION</FolioText>
+          <p className="mt-4 font-hand text-lg text-ink-soft">这里还没有收藏。</p>
+          <FolioText className="mt-2">{collectionId ? "从衣橱里勾选几件加入" : "OR START A NEW COLLECTION"}</FolioText>
         </div>
       ) : (
         <>
           <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
             {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect)}
           </div>
-          {/* 入册入口：空相纸 */}
           <motion.button
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -127,29 +202,55 @@ export default function WardrobePage() {
         </>
       )}
 
-      {/* 勾选组合：底部操作条 */}
+      {/* 勾选组合 / 加入收藏夹 */}
       {selecting && selectedIds.length > 0 && (
-        <motion.div
-          initial={{ y: 24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="fixed inset-x-0 bottom-[64px] z-30 px-7"
-        >
-          <div className="mx-auto flex max-w-md items-center justify-between border border-edge bg-paper-soft/95 px-5 py-3 shadow-3 backdrop-blur-sm">
-            <FolioText>已选 {selectedIds.length} 件</FolioText>
-            <button
-              onClick={() => navigate("/combine", { state: { selectedIds } })}
-              className="text-folio tracking-[0.18em] text-ink transition-colors hover:text-rose-deep"
-            >
-              组合它们 →
-            </button>
+        <div className="fixed inset-x-0 bottom-[64px] z-30 px-7">
+          <div className="relative mx-auto max-w-md">
+            {showColMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute bottom-full mb-2 w-full border border-edge bg-paper-soft/95 px-5 py-3 shadow-3 backdrop-blur-sm"
+              >
+                <FolioText>加入收藏夹</FolioText>
+                <div className="mt-2 flex flex-wrap items-center">
+                  {collections.map((c, i) => (
+                    <button key={c.id} onClick={() => addSelectedToCollection(c.id)} className="flex items-center">
+                      {i > 0 && <span className="mx-2 text-edge">·</span>}
+                      <span className="text-caption text-ink-soft transition-colors hover:text-rose-deep">{c.name}</span>
+                    </button>
+                  ))}
+                  {collections.length === 0 && (
+                    <span className="font-hand text-xs text-ink-faint">还没有收藏夹，先建一个</span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+            <div className="flex items-center justify-between border border-edge bg-paper-soft/95 px-5 py-3 shadow-3 backdrop-blur-sm">
+              <FolioText>已选 {selectedIds.length} 件</FolioText>
+              <div className="flex items-center gap-5">
+                <button
+                  onClick={() => setShowColMenu((v) => !v)}
+                  className="text-folio text-ink-soft transition-colors hover:text-rose-deep"
+                >
+                  加入收藏夹
+                </button>
+                <button
+                  onClick={() => navigate("/combine", { state: { selectedIds } })}
+                  className="text-folio tracking-[0.18em] text-ink transition-colors hover:text-rose-deep"
+                >
+                  组合它们 →
+                </button>
+              </div>
+            </div>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
 }
 
-/* ---------- 编辑式档案墙：横向 Collection 带 + 大小错落 ---------- */
+/* ---------- 编辑式档案墙 ---------- */
 function renderWall(
   items: Item[],
   onOpen: (id: number) => void,
