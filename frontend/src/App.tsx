@@ -5,6 +5,7 @@ import WardrobePage from "@/pages/WardrobePage";
 import ItemDetailPage from "@/pages/ItemDetailPage";
 import LookbookPage from "@/pages/LookbookPage";
 import CombinePage from "@/pages/CombinePage";
+import AddItemPage from "@/pages/AddItemPage";
 import MePage from "@/pages/MePage";
 import { TabBar } from "@/components/TabBar";
 
@@ -24,6 +25,7 @@ function AnimatedRoutes() {
           <Route path="/wardrobe" element={<WardrobePage />} />
           <Route path="/lookbook" element={<LookbookPage />} />
           <Route path="/combine" element={<CombinePage />} />
+          <Route path="/add" element={<AddItemPage />} />
           <Route path="/me" element={<MePage />} />
           <Route path="/item/:id" element={<ItemDetailPage />} />
         </Routes>

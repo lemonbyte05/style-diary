@@ -31,4 +31,21 @@ export const api = {
   lookCreate: (payload: { title: string; note: string; item_ids: number[] }) =>
     post<{ look: Look }>("/api/looks", payload),
   lookDelete: (id: number) => del<{ ok: boolean }>(`/api/looks/${id}`),
+  itemCreate: (payload: {
+    name: string;
+    category: string;
+    emoji?: string;
+    color_hex: string;
+    tags: string[];
+    story: string;
+    love_level: number;
+    image_url?: string | null;
+  }) => post<{ item: Item }>("/api/items", payload),
+  itemUpload: async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/items/upload", { method: "POST", body: fd });
+    if (!res.ok) throw new Error("上传失败");
+    return res.json() as Promise<{ url: string }>;
+  },
 };

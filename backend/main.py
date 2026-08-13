@@ -2,17 +2,23 @@ from __future__ import annotations
 
 import json
 import random
+import uuid
 from datetime import date
+from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from database import get_connection
 from seed import seed, serialize_item
 
-app = FastAPI(title="My Style Diary", version="0.2.0")
+GARMENTS_DIR = Path(__file__).parent / "static" / "garments"
+GARMENTS_DIR.mkdir(parents=True, exist_ok=True)
+
+app = FastAPI(title="My Style Diary", version="0.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +26,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 
 def _load_items(conn, ids: list[int]) -> list[dict]:
@@ -79,6 +87,54 @@ def items(category: Optional[str] = None) -> dict:
                 "SELECT * FROM items ORDER BY love_level DESC, id ASC"
             ).fetchall()
         return {"items": [serialize_item(r) for r in rows]}
+
+
+class ItemCreate(BaseModel):
+    name: str
+    category: str = "上衣"
+    emoji: str = "👗"
+    color_hex: str = "#F3E9F2"
+    tags: list[str] = []
+    story: str = ""
+    love_level: int = 3
+    image_url: Optional[str] = None
+
+
+@app.post("/api/items")
+def items_create(body: ItemCreate) -> dict:
+    with get_connection() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO items (name, emoji, category, color_hex, tags, story, love_level, image_url, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                body.name.strip(),
+                body.emoji or "👗",
+                body.category,
+                body.color_hex,
+                json.dumps(body.tags),
+                body.story,
+                max(1, min(5, body.love_level)),
+                body.image_url,
+                date.today().isoformat(),
+            ),
+        )
+        row = conn.execute(
+            "SELECT * FROM items WHERE id = ?", (cur.lastrowid,)
+        ).fetchone()
+        return {"item": serialize_item(row)}
+
+
+@app.post("/api/items/upload")
+async def items_upload(file: UploadFile = File(...)) -> dict:
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+        return {"error": "不支持的图片格式"}
+    name = f"{uuid.uuid4().hex}{ext}"
+    dest = GARMENTS_DIR / name
+    dest.write_bytes(await file.read())
+    return {"url": f"/static/garments/{name}"}
 
 
 @app.get("/api/items/{item_id}")

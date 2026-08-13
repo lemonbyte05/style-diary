@@ -37,15 +37,23 @@ export default function WardrobePage() {
       >
         <div className="flex items-baseline justify-between">
           <FolioText>✦ FASHION ARCHIVE</FolioText>
-          <button
-            onClick={() => {
-              setSelecting((s) => !s);
-              setSelectedIds([]);
-            }}
-            className={`text-folio transition-colors ${selecting ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
-          >
-            {selecting ? "完成" : "勾选"}
-          </button>
+          <div className="flex items-baseline gap-4">
+            <button
+              onClick={() => navigate("/add")}
+              className="text-folio text-ink-faint transition-colors hover:text-rose"
+            >
+              ＋ 入册
+            </button>
+            <button
+              onClick={() => {
+                setSelecting((s) => !s);
+                setSelectedIds([]);
+              }}
+              className={`text-folio transition-colors ${selecting ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
+            >
+              {selecting ? "完成" : "勾选"}
+            </button>
+          </div>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">WARDROBE</h1>
         <p className="mt-2 font-serif text-caption text-ink-soft">我的衣橱</p>
@@ -100,9 +108,23 @@ export default function WardrobePage() {
           <FolioText className="mt-2">OR START A NEW COLLECTION</FolioText>
         </div>
       ) : (
-        <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
-          {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect)}
-        </div>
+        <>
+          <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
+            {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect)}
+          </div>
+          {/* 入册入口：空相纸 */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            onClick={() => navigate("/add")}
+            className="mt-8 flex w-full flex-col items-center gap-2 border border-dashed border-edge py-12 transition-colors hover:border-rose"
+            style={{ borderRadius: 2 }}
+          >
+            <span className="font-serif text-3xl text-ink-faint/50">＋</span>
+            <span className="text-folio tracking-[0.2em] text-ink-faint">入册新衣 · ADD TO ARCHIVE</span>
+          </motion.button>
+        </>
       )}
 
       {/* 勾选组合：底部操作条 */}

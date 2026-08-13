@@ -144,5 +144,6 @@ def serialize_item(row: Any) -> dict:
         "tags": json.loads(row["tags"]),
         "story": row["story"],
         "love_level": row["love_level"],
+        "image_url": row["image_url"],
         "created_at": row["created_at"],
     }

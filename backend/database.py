@@ -23,6 +23,7 @@ def init_db() -> None:
                 tags TEXT NOT NULL DEFAULT '[]',
                 story TEXT DEFAULT '',
                 love_level INTEGER DEFAULT 3,
+                image_url TEXT,
                 created_at TEXT NOT NULL
             );
 
@@ -38,3 +39,7 @@ def init_db() -> None:
             DROP TABLE IF EXISTS saved_looks;
             """
         )
+        # 迁移：老库补 image_url 列
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(items)").fetchall()]
+        if "image_url" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN image_url TEXT")
