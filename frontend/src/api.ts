@@ -1,4 +1,4 @@
-import type { AiRecommendation, HomeData, Item } from "@/types";
+import type { AiRecommendation, GrowthData, HomeData, Item, OutfitItem } from "@/types";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -13,4 +13,6 @@ export const api = {
   item: (id: number | string) => get<{ item: Item }>(`/api/items/${id}`),
   aiRecommend: (occasion?: string) =>
     get<AiRecommendation>(`/api/ai/recommend${occasion ? `?occasion=${encodeURIComponent(occasion)}` : ""}`),
+  outfits: () => get<{ outfits: OutfitItem[] }>("/api/outfits"),
+  growth: () => get<GrowthData>("/api/growth"),
 };

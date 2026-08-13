@@ -43,3 +43,18 @@ export function formatFolioDate(iso: string): string {
   const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
   return `${months[(m ?? 1) - 1]} ${String(d ?? 1).padStart(2, "0")}`;
 }
+
+/** "2026-08" → { year: "2026", name: "AUGUST", short: "AUG" } */
+export function monthEn(ym: string): { year: string; name: string; short: string } {
+  const [y, m] = ym.split("-").map(Number);
+  const names = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
+  ];
+  const shorts = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  return {
+    year: String(y ?? 2026),
+    name: names[(m ?? 1) - 1],
+    short: shorts[(m ?? 1) - 1],
+  };
+}

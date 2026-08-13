@@ -12,12 +12,12 @@ interface TabItem {
 
 const LEFT_TABS: TabItem[] = [
   { to: "/wardrobe", label: "衣橱", icon: Shirt, textOnly: false },
-  { to: "/", label: "LOOK", icon: null, textOnly: true, state: { scrollTo: "outfit" } },
+  { to: "/lookbook", label: "LOOK", icon: null, textOnly: true },
 ];
 
 const RIGHT_TABS: TabItem[] = [
   { to: "/", label: "EDIT", icon: Sparkles, textOnly: false, state: { scrollTo: "inspiration" } },
-  { to: "/", label: "我的", icon: User, textOnly: false, state: { scrollTo: "diary" } },
+  { to: "/me", label: "我的", icon: User, textOnly: false },
 ];
 
 function isActive(to: string, pathname: string): boolean {

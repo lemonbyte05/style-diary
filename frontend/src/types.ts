@@ -9,6 +9,7 @@ export interface Item {
   love_level: number;
   created_at: string;
   worn_count?: number;
+  worn?: number;
   /** 去背景透明 PNG（未来真实服装图），缺省时回退到版画占位 */
   image_url?: string | null;
 }
@@ -37,4 +38,14 @@ export interface HomeData {
   style_keywords: string[];
   recent_collections: Item[];
   ai_recommendation: AiRecommendation;
+}
+
+export interface GrowthData {
+  total_items: number;
+  age_days: number;
+  worn_total: number;
+  most_worn: Item[];
+  style_keywords: { label: string; count: number }[];
+  monthly: { month: string; count: number }[];
+  favorites: OutfitItem[];
 }

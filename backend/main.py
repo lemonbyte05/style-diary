@@ -118,6 +118,68 @@ def ai_recommend(occasion: str = "日常") -> dict:
         return _recommend(conn, occasion)
 
 
+@app.get("/api/outfits")
+def outfits_list() -> dict:
+    with get_connection() as conn:
+        rows = conn.execute("SELECT * FROM outfits ORDER BY date DESC").fetchall()
+        return {"outfits": [_load_outfit(conn, r) for r in rows]}
+
+
+@app.get("/api/growth")
+def growth() -> dict:
+    with get_connection() as conn:
+        items = [serialize_item(r) for r in conn.execute("SELECT * FROM items").fetchall()]
+        outfit_rows = conn.execute("SELECT * FROM outfits ORDER BY date ASC").fetchall()
+        today = date.today()
+
+        age_days = 1
+        if items:
+            first = min(i["created_at"] for i in items)
+            try:
+                age_days = max((today - date.fromisoformat(first)).days, 1)
+            except ValueError:
+                pass
+
+        worn: dict[int, int] = {}
+        for o in outfit_rows:
+            for iid in json.loads(o["item_ids"]):
+                worn[iid] = worn.get(iid, 0) + 1
+        by_id = {i["id"]: i for i in items}
+        most_worn = [
+            {**by_id[iid], "worn": c}
+            for iid, c in sorted(worn.items(), key=lambda kv: -kv[1])[:4]
+            if iid in by_id
+        ]
+
+        kw: dict[str, int] = {}
+        for i in items:
+            for t in i["tags"]:
+                kw[t] = kw.get(t, 0) + 1
+        style_keywords = [
+            {"label": k, "count": v} for k, v in sorted(kw.items(), key=lambda kv: -kv[1])[:6]
+        ]
+
+        monthly: dict[str, int] = {}
+        for o in outfit_rows:
+            m = o["date"][:7]
+            monthly[m] = monthly.get(m, 0) + 1
+
+        favorites = [
+            _load_outfit(conn, r)
+            for r in conn.execute("SELECT * FROM outfits ORDER BY date DESC LIMIT 4").fetchall()
+        ]
+
+        return {
+            "total_items": len(items),
+            "age_days": age_days,
+            "worn_total": len(outfit_rows),
+            "most_worn": most_worn,
+            "style_keywords": style_keywords,
+            "monthly": [{"month": m, "count": c} for m, c in sorted(monthly.items())],
+            "favorites": favorites,
+        }
+
+
 class AiRequest(BaseModel):
     occasion: str = "日常"
 
