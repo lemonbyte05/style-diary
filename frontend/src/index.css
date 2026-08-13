@@ -56,6 +56,16 @@
     white-space: nowrap;
   }
 
+  /* 首字下沉（杂志编辑体） */
+  .drop-cap::first-letter {
+    float: left;
+    padding: 2px 8px 0 0;
+    font-family: 'Songti SC', 'Noto Serif SC', serif;
+    font-size: 3.2em;
+    line-height: 0.9;
+    color: #B06F60;
+  }
+
   /* 和纸胶带 */
   .washi-tape {
     position: absolute;

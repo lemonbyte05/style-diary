@@ -57,7 +57,7 @@ export default function WardrobePage() {
         ))}
       </div>
 
-      <TornDivider label="收藏" />
+      <TornDivider label="收藏" note="每一件，都值得被记住" />
 
       {filtered.length === 0 ? (
         <div className="mt-10 flex flex-col items-center py-16 text-center">

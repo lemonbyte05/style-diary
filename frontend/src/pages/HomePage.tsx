@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight, Camera, Shuffle, BookmarkPlus } from "lucide-react";
 import { api } from "@/api";
 import type { HomeData } from "@/types";
+import { formatDiaryDate } from "@/utils";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
 import { KeywordChip } from "@/components/ui/KeywordChip";
@@ -80,7 +81,7 @@ function PageIntro() {
       <FolioText className="mt-2 block">
         第 {new Date().getDate()} 天 · 收藏这件事
       </FolioText>
-      <TornDivider label="TODAY" />
+      <TornDivider label="TODAY" note="新的一天，新的自己" />
     </motion.header>
   );
 }
@@ -137,45 +138,75 @@ function SectionOutfit({
     >
       {outfit ? (
         <div className="relative overflow-hidden rounded-xl bg-paper-soft shadow-hero">
-          <div className="relative h-[420px] w-full">
+          <div className="relative h-[460px] w-full">
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(160deg, ${outfit.items[0]?.color_hex ?? "#F3E9F2"} 0%, #E9B49B 45%, #C98A7A 78%, #B06F60 100%)`,
+                background: `linear-gradient(160deg, ${outfit.items[0]?.color_hex ?? "#F3E9F2"} 0%, #E9B49B 42%, #C98A7A 74%, #B06F60 100%)`,
               }}
             />
+
+            {/* 超大衬线日期（封面题字） */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.15 }}
+              className="absolute left-4 top-3 font-serif text-4xl leading-none text-ink/40"
+            >
+              {formatDiaryDate(outfit.date)}
+            </motion.p>
+
+            {/* 右侧竖排 VOL 小字 */}
+            <span
+              className="absolute right-3 top-4 text-folio tracking-[0.3em] text-ink/30"
+              style={{ writingMode: "vertical-rl" }}
+            >
+              MY STYLE DIARY
+            </span>
+
+            {/* 单品卡 */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex gap-4">
                 {outfit.items.slice(0, 2).map((item, i) => (
                   <motion.button
                     key={item.id}
                     onClick={() => onNavigate(item.id)}
-                    initial={{ opacity: 0, y: 24 }}
+                    initial={{ opacity: 0, y: 28 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 + i * 0.15, ease: EASE_OUT }}
-                    whileHover={{ y: -6 }}
-                    className="h-40 w-32 rounded-lg bg-paper-soft/90 p-2 shadow-2"
+                    transition={{ duration: 0.6, delay: 0.25 + i * 0.16, ease: EASE_OUT }}
+                    whileHover={{ y: -6, rotate: i === 0 ? -1.5 : 1.5 }}
+                    className={`h-44 w-36 rounded-lg bg-paper-soft/95 p-2 shadow-2 ${
+                      i === 0 ? "rotate-[-3deg]" : "rotate-[2.5deg] translate-y-3"
+                    }`}
                   >
                     <SpecimenImage
                       colorHex={item.color_hex}
                       emoji={item.emoji}
                       name={item.name}
-                      className="h-28 w-full rounded-md"
+                      className="h-32 w-full rounded-md"
                     />
+                    <p className="mt-1.5 truncate text-center font-hand text-xs text-ink">
+                      {item.name}
+                    </p>
                   </motion.button>
                 ))}
               </div>
             </div>
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent p-5 pt-16">
-              <h2 className="font-serif text-title text-paper-soft">「{outfit.title}」</h2>
-              <div className="mt-2 flex items-center gap-2 text-folio text-paper-soft/70">
-                <span>{outfit.date}</span>
-                <span>·</span>
+
+            {/* 底部压字 */}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 via-ink/60 to-transparent p-5 pt-24">
+              <div className="flex items-center gap-2 text-folio text-paper-soft/70">
                 <span>{outfit.weather}</span>
                 <span>·</span>
                 <span>{outfit.occasion}</span>
               </div>
+              <h2 className="mt-1.5 font-serif text-title leading-snug text-paper-soft">
+                「{outfit.title}」
+              </h2>
+              <p className="mt-2 font-hand text-caption text-paper-soft/85">
+                {outfit.note}
+              </p>
             </div>
           </div>
         </div>
@@ -194,7 +225,7 @@ function SectionOutfit({
 function SectionKeywords({ keywords }: { keywords: string[] }) {
   return (
     <section className="mb-8">
-      <TornDivider label="本周风格" />
+      <TornDivider label="本周风格" note="今天的心情，都写在衣领上" />
       <div className="mt-4 flex flex-wrap gap-2">
         {keywords.map((kw, i) => (
           <KeywordChip key={kw} label={kw} delay={i * 0.06} />
@@ -272,7 +303,7 @@ function SectionAI({
       transition={{ duration: 0.6, ease: EASE_OUT }}
       className="scroll-mt-24"
     >
-      <TornDivider label="今日灵感" />
+      <TornDivider label="今日灵感" note="摇一摇，看看另一种可能" />
       <motion.div
         animate={shaking ? { rotate: [0, -2, 2, -2, 2, 0], x: [0, -4, 4, -4, 4, 0] } : {}}
         transition={{ duration: 0.5 }}

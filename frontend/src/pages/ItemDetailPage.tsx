@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Sparkles, PenLine } from "lucide-react";
 import { api } from "@/api";
 import type { Item } from "@/types";
+import { formatInkDate } from "@/utils";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
 import { KeywordChip } from "@/components/ui/KeywordChip";
@@ -24,6 +25,7 @@ export default function ItemDetailPage() {
 
   const [year, month] = item.created_at.split("-").slice(0, 2);
   const fullName = `${year}年${Number(month)}月`;
+  const inkDate = formatInkDate(item.created_at);
 
   return (
     <div className="mx-auto max-w-md px-6 pb-32 pt-6">
@@ -94,23 +96,31 @@ export default function ItemDetailPage() {
         </div>
 
         <div className="relative mt-4">
-          <TornDivider label="它的故事" />
+          <TornDivider label="它的故事" note="写给自己，也写给时光" />
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="mt-2 font-hand text-body leading-relaxed text-ink-soft"
+            className="drop-cap mt-3 font-hand text-body leading-relaxed text-ink-soft"
           >
             {item.story}
           </motion.p>
+          <p className="mt-2 text-right font-hand text-caption text-rose-deep/70">
+            —— 今天又想起穿它的那天
+          </p>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-dashed border-edge pt-3">
           <FolioText>搭配过 {item.worn_count ?? 0} 次</FolioText>
-          <button className="flex items-center gap-1 text-folio text-rose transition-colors hover:text-rose-deep">
-            <Sparkles size={13} strokeWidth={1.6} /> 回顾穿搭
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="-rotate-3 rounded-sm border border-rose-deep/40 px-1.5 py-0.5 text-folio text-rose-deep">
+              {inkDate.year} · 珍藏
+            </span>
+            <button className="flex items-center gap-1 text-folio text-rose transition-colors hover:text-rose-deep">
+              <Sparkles size={13} strokeWidth={1.6} /> 回顾穿搭
+            </button>
+          </div>
         </div>
       </motion.div>
 
