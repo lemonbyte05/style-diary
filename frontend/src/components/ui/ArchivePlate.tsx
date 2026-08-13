@@ -16,6 +16,9 @@ export function ArchivePlate({
   tape = false,
   tall = true,
   onOpen,
+  selectable = false,
+  selected = false,
+  onSelect,
 }: {
   item: Item;
   index: number;
@@ -24,6 +27,9 @@ export function ArchivePlate({
   tape?: boolean;
   tall?: boolean;
   onOpen?: (id: number) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: number) => void;
 }) {
   return (
     <motion.div
@@ -36,16 +42,22 @@ export function ArchivePlate({
       className="relative"
       style={{ rotate }}
     >
-      {tape && <div className="washi-tape" aria-hidden />}
+      {tape && !selectable && <div className="washi-tape" aria-hidden />}
       <button
         onClick={() => {
           haptic.tap();
-          onOpen?.(item.id);
+          if (selectable) onSelect?.(item.id);
+          else onOpen?.(item.id);
         }}
-        className={`relative block bg-paper-soft p-2 pb-2.5 transition-shadow duration-300 hover:shadow-2 ${
+        className={`relative block bg-paper-soft p-2 pb-2.5 transition-all duration-200 ${
           tall ? "aspect-[4/5]" : "aspect-square"
         }`}
-        style={{ borderRadius: 2 }}
+        style={{
+          borderRadius: 2,
+          outline: selected ? "1px solid rgb(var(--c-rose-deep))" : "none",
+          opacity: selectable && !selected ? 0.72 : 1,
+          transform: selected ? "scale(1.02)" : undefined,
+        }}
       >
         <span
           className="pointer-events-none absolute inset-x-0 top-0 h-5"

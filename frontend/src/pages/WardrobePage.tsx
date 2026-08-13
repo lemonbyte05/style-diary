@@ -13,18 +13,23 @@ export default function WardrobePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [category, setCategory] = useState("全部");
   const [query, setQuery] = useState("");
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     api.items(category).then((res) => setItems(res.items));
   }, [category]);
 
+  const toggleSelect = (id: number) =>
+    setSelectedIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
   const filtered = query
     ? items.filter((i) => i.name.includes(query) || i.tags.some((t) => t.includes(query)))
     : items;
 
   return (
-    <div className="mx-auto max-w-md px-7 pb-40 pt-9">
+    <div className="mx-auto max-w-md px-7 pb-44 pt-9">
       <motion.header
         initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -32,7 +37,15 @@ export default function WardrobePage() {
       >
         <div className="flex items-baseline justify-between">
           <FolioText>✦ FASHION ARCHIVE</FolioText>
-          <FolioText>VOL.01</FolioText>
+          <button
+            onClick={() => {
+              setSelecting((s) => !s);
+              setSelectedIds([]);
+            }}
+            className={`text-folio transition-colors ${selecting ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
+          >
+            {selecting ? "完成" : "勾选"}
+          </button>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">WARDROBE</h1>
         <p className="mt-2 font-serif text-caption text-ink-soft">我的衣橱</p>
@@ -88,15 +101,40 @@ export default function WardrobePage() {
         </div>
       ) : (
         <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
-          {renderWall(filtered, (id) => navigate(`/item/${id}`))}
+          {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect)}
         </div>
+      )}
+
+      {/* 勾选组合：底部操作条 */}
+      {selecting && selectedIds.length > 0 && (
+        <motion.div
+          initial={{ y: 24, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed inset-x-0 bottom-[64px] z-30 px-7"
+        >
+          <div className="mx-auto flex max-w-md items-center justify-between border border-edge bg-paper-soft/95 px-5 py-3 shadow-3 backdrop-blur-sm">
+            <FolioText>已选 {selectedIds.length} 件</FolioText>
+            <button
+              onClick={() => navigate("/combine", { state: { selectedIds } })}
+              className="text-folio tracking-[0.18em] text-ink transition-colors hover:text-rose-deep"
+            >
+              组合它们 →
+            </button>
+          </div>
+        </motion.div>
       )}
     </div>
   );
 }
 
 /* ---------- 编辑式档案墙：横向 Collection 带 + 大小错落 ---------- */
-function renderWall(items: Item[], onOpen: (id: number) => void) {
+function renderWall(
+  items: Item[],
+  onOpen: (id: number) => void,
+  selecting: boolean,
+  selectedIds: number[],
+  toggleSelect: (id: number) => void
+) {
   const nodes: React.ReactNode[] = [];
   for (let i = 0; i < items.length; i++) {
     if (i % 4 === 0) {
@@ -111,7 +149,16 @@ function renderWall(items: Item[], onOpen: (id: number) => void) {
           <div className="mt-3 flex gap-4">
             {band.map((item, j) => (
               <div key={item.id} className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}>
-                <ArchivePlate item={item} index={item.id} rotate={j === 0 ? -1.4 : 1.6} tall={false} onOpen={onOpen} />
+                <ArchivePlate
+                  item={item}
+                  index={item.id}
+                  rotate={j === 0 ? -1.4 : 1.6}
+                  tall={false}
+                  onOpen={onOpen}
+                  selectable={selecting}
+                  selected={selectedIds.includes(item.id)}
+                  onSelect={toggleSelect}
+                />
               </div>
             ))}
           </div>
@@ -131,6 +178,9 @@ function renderWall(items: Item[], onOpen: (id: number) => void) {
           tall={mod !== 2}
           tape={i === 1 || i === 5}
           onOpen={onOpen}
+          selectable={selecting}
+          selected={selectedIds.includes(item.id)}
+          onSelect={toggleSelect}
         />
       </div>
     );

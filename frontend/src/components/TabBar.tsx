@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Shirt, Sparkles, User, Plus } from "lucide-react";
+import { Shirt, User, House, Plus } from "lucide-react";
 
 interface TabItem {
   to: string;
@@ -16,7 +16,7 @@ const LEFT_TABS: TabItem[] = [
 ];
 
 const RIGHT_TABS: TabItem[] = [
-  { to: "/", label: "EDIT", icon: Sparkles, textOnly: false, state: { scrollTo: "inspiration" } },
+  { to: "/", label: "首页", icon: House, textOnly: false },
   { to: "/me", label: "我的", icon: User, textOnly: false },
 ];
 
@@ -29,7 +29,7 @@ export function TabBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const go = (item: { to: string; state?: object; label: string }) => {
+  const go = (item: TabItem) => {
     if (item.state) navigate(item.to, { state: item.state });
     else navigate(item.to);
   };
@@ -70,10 +70,10 @@ export function TabBar() {
           {renderItem(LEFT_TABS[0])}
           {renderItem(LEFT_TABS[1])}
 
-          {/* 中央记录：更小的点，更柔的玫瑰 */}
+          {/* 中央记录：进入手动搭配 */}
           <button
-            onClick={() => go({ to: "/", state: { scrollTo: "outfit" }, label: "记录" })}
-            aria-label="记录"
+            onClick={() => go({ to: "/combine", label: "组合", icon: null, textOnly: false })}
+            aria-label="组合"
             className="relative -top-4 mx-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose/90 text-paper-soft shadow-1 transition-transform hover:scale-105 active:scale-95"
           >
             <Plus size={16} strokeWidth={1.3} />

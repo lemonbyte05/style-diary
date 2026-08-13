@@ -109,22 +109,6 @@ ITEMS = [
     },
 ]
 
-OUTFITS = [
-    {"title": "温柔奶油色的下午", "mood": "🎀", "weather": "晴", "occasion": "约会", "note": "今天穿了喜欢了很久的裙子。", "item_ids": [1, 8, 9]},
-    {"title": "图书馆的雾蓝色", "mood": "✨", "weather": "阴", "occasion": "日常", "note": "百褶裙在书架间转了个圈。", "item_ids": [4, 10]},
-    {"title": "杏色风衣的星期三", "mood": "☀", "weather": "晴", "occasion": "通勤", "note": "风衣口袋里藏了一片银杏。", "item_ids": [6, 2]},
-    {"title": "蜜桃与奶茶", "mood": "🎀", "weather": "晴", "occasion": "约会", "note": "想被秋天温柔地看一眼。", "item_ids": [5, 8]},
-    {"title": "灰蓝毛衣的黄昏", "mood": "🌧", "weather": "阴", "occasion": "日常", "note": "风从袖口钻进来，也不恼。", "item_ids": [7, 3]},
-    {"title": "蔷薇色的早晨", "mood": "✨", "weather": "晴", "occasion": "约会", "note": "朝霞把衬衫染成了粉。", "item_ids": [5, 1]},
-    {"title": "鼠尾草的春天", "mood": "☀", "weather": "多云", "occasion": "通勤", "note": "绿色是春天寄来的明信片。", "item_ids": [10, 4]},
-    {"title": "奶油与燕麦", "mood": "🎀", "weather": "晴", "occasion": "日常", "note": "把自己裹进一杯燕麦奶里。", "item_ids": [2, 9, 3]},
-    {"title": "围巾裹住的冬天", "mood": "🌧", "weather": "雪", "occasion": "日常", "note": "冷空气来了，把温柔穿上。", "item_ids": [9, 7]},
-    {"title": "一件风衣的迁徙", "mood": "☀", "weather": "晴", "occasion": "通勤", "note": "城市在脚下来回，风衣替我挡风。", "item_ids": [6, 3, 8]},
-]
-
-# 距离今天的偏移天数：让穿搭跨越多个月份
-OUTFIT_OFFSETS = [2, 9, 34, 61, 89, 116, 143, 177, 205, 232]
-
 
 def seed() -> None:
     init_db()
@@ -146,26 +130,6 @@ def seed() -> None:
                         item["story"],
                         item["love_level"],
                         (date.today() - timedelta(days=random.randint(1, 400))).isoformat(),
-                    ),
-                )
-        outfit_count = conn.execute("SELECT COUNT(*) AS c FROM outfits").fetchone()["c"]
-        if outfit_count < len(OUTFITS):
-            conn.execute("DELETE FROM outfits")
-            today = date.today()
-            for idx, outfit in enumerate(OUTFITS):
-                conn.execute(
-                    """
-                    INSERT INTO outfits (date, title, mood, weather, occasion, note, item_ids)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        (today - timedelta(days=OUTFIT_OFFSETS[idx])).isoformat(),
-                        outfit["title"],
-                        outfit["mood"],
-                        outfit["weather"],
-                        outfit["occasion"],
-                        outfit["note"],
-                        json.dumps(outfit["item_ids"]),
                     ),
                 )
 

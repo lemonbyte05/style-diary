@@ -26,24 +26,15 @@ def init_db() -> None:
                 created_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS outfits (
+            CREATE TABLE IF NOT EXISTS looks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date TEXT NOT NULL,
+                created_at TEXT NOT NULL,
                 title TEXT NOT NULL,
-                mood TEXT NOT NULL,
-                weather TEXT DEFAULT '晴',
-                occasion TEXT DEFAULT '日常',
                 note TEXT DEFAULT '',
                 item_ids TEXT NOT NULL DEFAULT '[]'
             );
 
-            CREATE TABLE IF NOT EXISTS saved_looks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT NOT NULL,
-                main_item_id INTEGER,
-                second_item_id INTEGER,
-                reason TEXT DEFAULT '',
-                context TEXT DEFAULT ''
-            );
+            DROP TABLE IF EXISTS outfits;
+            DROP TABLE IF EXISTS saved_looks;
             """
         )

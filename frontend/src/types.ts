@@ -14,38 +14,17 @@ export interface Item {
   image_url?: string | null;
 }
 
-export interface OutfitItem {
+/** 手动搭配（我的搭配） */
+export interface Look {
   id: number;
-  date: string;
+  created_at: string;
   title: string;
-  mood: string;
-  weather: string;
-  occasion: string;
   note: string;
   items: Item[];
 }
 
-export interface AiRecommendation {
-  combo: Item[];
-  context: string;
-  reason: string;
-}
-
 export interface HomeData {
   masthead: { vol: number; date: string; month: string; day: number };
-  mood: { emoji: string; word: string; note: string };
-  today_outfit: OutfitItem | null;
-  style_keywords: string[];
-  recent_collections: Item[];
-  ai_recommendation: AiRecommendation;
-}
-
-export interface GrowthData {
   total_items: number;
-  age_days: number;
-  worn_total: number;
-  most_worn: Item[];
-  style_keywords: { label: string; count: number }[];
-  monthly: { month: string; count: number }[];
-  favorites: OutfitItem[];
+  recent_collections: Item[];
 }

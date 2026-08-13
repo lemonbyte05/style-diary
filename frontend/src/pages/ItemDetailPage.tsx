@@ -8,15 +8,12 @@ import { formatInkDate } from "@/utils";
 import { haptic } from "@/haptics";
 import { FolioText } from "@/components/ui/FolioText";
 import { ClothingImage } from "@/components/ui/ClothingImage";
-import { StampSeal } from "@/components/ui/StampSeal";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<Item | null>(null);
-  const [stamped, setStamped] = useState(false);
-  const [added, setAdded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -127,24 +124,13 @@ export default function ItemDetailPage() {
       <div className="mt-8 flex items-center gap-4">
         <motion.button
           whileTap={{ scale: 0.98 }}
-          onClick={async () => {
-            if (added) return;
-            haptic.stamp();
-            try {
-              await api.todayAdd(item.id);
-              setAdded(true);
-              setStamped(true);
-              setTimeout(() => setStamped(false), 1600);
-            } catch {
-              /* 保持原状 */
-            }
+          onClick={() => {
+            haptic.tap();
+            navigate("/combine", { state: { selectedIds: [item.id] } });
           }}
-          className={`relative flex-1 border-b pb-1.5 text-center text-folio tracking-[0.22em] transition-colors ${
-            added ? "border-rose-deep text-rose-deep" : "border-ink text-ink hover:text-rose-deep"
-          }`}
+          className="relative flex-1 border-b border-ink pb-1.5 text-center text-folio tracking-[0.22em] text-ink transition-colors hover:text-rose-deep"
         >
-          {added ? "已放入今日穿搭" : "加入今日穿搭"}
-          <StampSeal show={stamped} label="已放入" />
+          加入搭配
         </motion.button>
         <span className="text-edge">/</span>
         <button className="text-folio tracking-[0.22em] text-ink-faint transition-colors hover:text-ink">

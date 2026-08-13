@@ -10,9 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from database import get_connection
-from seed import MOODS, STYLE_KEYWORDS, seed, serialize_item
+from seed import seed, serialize_item
 
-app = FastAPI(title="My Style Diary", version="0.1.0")
+app = FastAPI(title="My Style Diary", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,14 +33,11 @@ def _load_items(conn, ids: list[int]) -> list[dict]:
     return [by_id[i] for i in ids if i in by_id]
 
 
-def _load_outfit(conn, row) -> dict:
+def _load_look(conn, row) -> dict:
     return {
         "id": row["id"],
-        "date": row["date"],
+        "created_at": row["created_at"],
         "title": row["title"],
-        "mood": row["mood"],
-        "weather": row["weather"],
-        "occasion": row["occasion"],
         "note": row["note"],
         "items": _load_items(conn, json.loads(row["item_ids"])),
     }
@@ -54,31 +51,18 @@ def on_startup() -> None:
 @app.get("/api/home")
 def home() -> dict:
     with get_connection() as conn:
-        today = date.today().isoformat()
-        outfit_row = conn.execute(
-            "SELECT * FROM outfits ORDER BY ABS(julianday(date) - julianday(?)) LIMIT 1",
-            (today,),
-        ).fetchone()
-        outfit = _load_outfit(conn, outfit_row) if outfit_row else None
-
         items = [serialize_item(r) for r in conn.execute(
             "SELECT * FROM items ORDER BY id DESC"
         ).fetchall()]
-        recent = items[:6]
-
-        rec = _recommend(conn, occasion=outfit["occasion"] if outfit else "日常")
         return {
             "masthead": {
                 "vol": 24,
-                "date": today,
+                "date": date.today().isoformat(),
                 "month": f"{date.today().month}月",
                 "day": date.today().day,
             },
-            "mood": MOODS[0],
-            "today_outfit": outfit,
-            "style_keywords": STYLE_KEYWORDS,
-            "recent_collections": recent,
-            "ai_recommendation": rec,
+            "total_items": len(items),
+            "recent_collections": items[:6],
         }
 
 
@@ -104,12 +88,53 @@ def item_detail(item_id: int) -> dict:
         if not row:
             return {"error": "not_found"}
         item = serialize_item(row)
-        outfit_count = 0
-        for o in conn.execute("SELECT item_ids FROM outfits").fetchall():
+        used = 0
+        for o in conn.execute("SELECT item_ids FROM looks").fetchall():
             if item_id in json.loads(o["item_ids"]):
-                outfit_count += 1
-        item["worn_count"] = outfit_count
+                used += 1
+        item["worn_count"] = used
         return {"item": item}
+
+
+@app.get("/api/looks")
+def looks_list() -> dict:
+    with get_connection() as conn:
+        rows = conn.execute("SELECT * FROM looks ORDER BY id DESC").fetchall()
+        return {"looks": [_load_look(conn, r) for r in rows]}
+
+
+class LookCreate(BaseModel):
+    title: str
+    note: str = ""
+    item_ids: list[int] = []
+
+
+@app.post("/api/looks")
+def looks_create(body: LookCreate) -> dict:
+    with get_connection() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO looks (created_at, title, note, item_ids)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                date.today().isoformat(),
+                body.title or "无题",
+                body.note,
+                json.dumps(body.item_ids),
+            ),
+        )
+        row = conn.execute(
+            "SELECT * FROM looks WHERE id = ?", (cur.lastrowid,)
+        ).fetchone()
+        return {"look": _load_look(conn, row)}
+
+
+@app.delete("/api/looks/{look_id}")
+def looks_delete(look_id: int) -> dict:
+    with get_connection() as conn:
+        conn.execute("DELETE FROM looks WHERE id = ?", (look_id,))
+        return {"ok": True}
 
 
 @app.get("/api/ai/recommend")
@@ -118,130 +143,8 @@ def ai_recommend(occasion: str = "日常") -> dict:
         return _recommend(conn, occasion)
 
 
-@app.get("/api/outfits")
-def outfits_list() -> dict:
-    with get_connection() as conn:
-        rows = conn.execute("SELECT * FROM outfits ORDER BY date DESC").fetchall()
-        return {"outfits": [_load_outfit(conn, r) for r in rows]}
-
-
-@app.get("/api/growth")
-def growth() -> dict:
-    with get_connection() as conn:
-        items = [serialize_item(r) for r in conn.execute("SELECT * FROM items").fetchall()]
-        outfit_rows = conn.execute("SELECT * FROM outfits ORDER BY date ASC").fetchall()
-        today = date.today()
-
-        age_days = 1
-        if items:
-            first = min(i["created_at"] for i in items)
-            try:
-                age_days = max((today - date.fromisoformat(first)).days, 1)
-            except ValueError:
-                pass
-
-        worn: dict[int, int] = {}
-        for o in outfit_rows:
-            for iid in json.loads(o["item_ids"]):
-                worn[iid] = worn.get(iid, 0) + 1
-        by_id = {i["id"]: i for i in items}
-        most_worn = [
-            {**by_id[iid], "worn": c}
-            for iid, c in sorted(worn.items(), key=lambda kv: -kv[1])[:4]
-            if iid in by_id
-        ]
-
-        kw: dict[str, int] = {}
-        for i in items:
-            for t in i["tags"]:
-                kw[t] = kw.get(t, 0) + 1
-        style_keywords = [
-            {"label": k, "count": v} for k, v in sorted(kw.items(), key=lambda kv: -kv[1])[:6]
-        ]
-
-        monthly: dict[str, int] = {}
-        for o in outfit_rows:
-            m = o["date"][:7]
-            monthly[m] = monthly.get(m, 0) + 1
-
-        favorites = [
-            _load_outfit(conn, r)
-            for r in conn.execute("SELECT * FROM outfits ORDER BY date DESC LIMIT 4").fetchall()
-        ]
-
-        return {
-            "total_items": len(items),
-            "age_days": age_days,
-            "worn_total": len(outfit_rows),
-            "most_worn": most_worn,
-            "style_keywords": style_keywords,
-            "monthly": [{"month": m, "count": c} for m, c in sorted(monthly.items())],
-            "favorites": favorites,
-        }
-
-
-class AiRequest(BaseModel):
-    occasion: str = "日常"
-
-
-class SaveLook(BaseModel):
-    main_item_id: int
-    second_item_id: Optional[int] = None
-    reason: str = ""
-    context: str = ""
-
-
-class TodayAdd(BaseModel):
-    item_id: int
-
-
-@app.post("/api/saved")
-def save_look(body: SaveLook) -> dict:
-    with get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO saved_looks (created_at, main_item_id, second_item_id, reason, context)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (
-                date.today().isoformat(),
-                body.main_item_id,
-                body.second_item_id,
-                body.reason,
-                body.context,
-            ),
-        )
-        count = conn.execute("SELECT COUNT(*) AS c FROM saved_looks").fetchone()["c"]
-        return {"ok": True, "count": count}
-
-
-@app.post("/api/today/add")
-def today_add(body: TodayAdd) -> dict:
-    today = date.today().isoformat()
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM outfits WHERE date = ? ORDER BY id LIMIT 1", (today,)
-        ).fetchone()
-        if row:
-            ids = json.loads(row["item_ids"])
-            if body.item_id not in ids:
-                ids.append(body.item_id)
-            conn.execute(
-                "UPDATE outfits SET item_ids = ? WHERE id = ?",
-                (json.dumps(ids), row["id"]),
-            )
-            return {"ok": True, "outfit_id": row["id"]}
-        cur = conn.execute(
-            """
-            INSERT INTO outfits (date, title, mood, weather, occasion, note, item_ids)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (today, "今日穿搭", "🎀", "晴", "日常", "今天的第一件。", json.dumps([body.item_id])),
-        )
-        return {"ok": True, "outfit_id": cur.lastrowid}
-
-
 def _recommend(conn, occasion: str) -> dict:
+    """智能搭配：暂未接入前端，保留供后续使用"""
     rows = conn.execute("SELECT * FROM items ORDER BY love_level DESC").fetchall()
     items = [serialize_item(r) for r in rows]
     if not items:
@@ -250,7 +153,7 @@ def _recommend(conn, occasion: str) -> dict:
     pool = list(items)
     random.shuffle(pool)
 
-    def pick(top: str, bottom: str | None = None) -> list[dict]:
+    def pick(top: str, bottom: Optional[str] = None) -> list[dict]:
         chosen = [i for i in pool if i["category"] == top][:1]
         if bottom:
             chosen += [i for i in pool if i["category"] == bottom][:1]
@@ -268,7 +171,6 @@ def _recommend(conn, occasion: str) -> dict:
     if len(combo) < 2:
         combo = (combo + pool)[:2]
 
-    names = " × ".join(i["name"] for i in combo)
     reason = random.choice(
         [
             "奶油色的慵懒午后，温柔又有余韵。",

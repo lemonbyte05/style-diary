@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "@/api";
-import type { OutfitItem } from "@/types";
+import type { Look } from "@/types";
 import { monthEn } from "@/utils";
 import { FolioText } from "@/components/ui/FolioText";
 import { LookEntry } from "@/components/ui/LookEntry";
@@ -9,20 +9,21 @@ import { LookEntry } from "@/components/ui/LookEntry";
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 export default function LookbookPage() {
-  const [outfits, setOutfits] = useState<OutfitItem[]>([]);
+  const [looks, setLooks] = useState<Look[]>([]);
 
-  useEffect(() => {
-    api.outfits().then((r) => setOutfits(r.outfits)).catch(() => setOutfits([]));
-  }, []);
+  const load = () => {
+    api.looks().then((r) => setLooks(r.looks)).catch(() => setLooks([]));
+  };
+  useEffect(load, []);
 
   const groups = useMemo(() => {
-    const map = new Map<string, OutfitItem[]>();
-    for (const o of outfits) {
-      const key = o.date.slice(0, 7);
+    const map = new Map<string, Look[]>();
+    for (const o of looks) {
+      const key = o.created_at.slice(0, 7);
       map.set(key, [...(map.get(key) ?? []), o]);
     }
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [outfits]);
+  }, [looks]);
 
   return (
     <div className="mx-auto max-w-md px-7 pb-40 pt-9">
@@ -36,9 +37,9 @@ export default function LookbookPage() {
           <FolioText>VOL.02</FolioText>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">LOOKBOOK</h1>
-        <p className="mt-2 font-serif text-caption text-ink-soft">我的穿搭册</p>
-        <p className="mt-4 text-folio text-ink-faint">{outfits.length} LOOKS · 2026</p>
-        <p className="mt-2 font-hand text-sm text-ink-soft">每一页，都是一天的心情。</p>
+        <p className="mt-2 font-serif text-caption text-ink-soft">我的搭配</p>
+        <p className="mt-4 text-folio text-ink-faint">{looks.length} LOOKS</p>
+        <p className="mt-2 font-hand text-sm text-ink-soft">都是你自己搭出来的。</p>
       </motion.header>
 
       <div className="editorial-rule mt-7 w-full" />
@@ -46,8 +47,8 @@ export default function LookbookPage() {
       {groups.length === 0 ? (
         <div className="flex flex-col items-center py-24 text-center">
           <span className="font-serif text-3xl text-ink-faint/40">—</span>
-          <p className="mt-4 font-hand text-lg text-ink-soft">穿搭册还是空白的。</p>
-          <FolioText className="mt-2">START YOUR FIRST LOOK</FolioText>
+          <p className="mt-4 font-hand text-lg text-ink-soft">搭配册还是空白的。</p>
+          <FolioText className="mt-2">TAP + TO START A LOOK</FolioText>
         </div>
       ) : (
         groups.map(([ym, list]) => {
@@ -61,7 +62,7 @@ export default function LookbookPage() {
                 <FolioText>{list.length} LOOKS</FolioText>
               </div>
               {list.map((o) => (
-                <LookEntry key={o.id} outfit={o} />
+                <LookEntry key={o.id} look={o} />
               ))}
             </section>
           );
