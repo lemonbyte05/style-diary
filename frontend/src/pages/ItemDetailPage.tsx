@@ -7,7 +7,7 @@ import type { Item } from "@/types";
 import { formatInkDate } from "@/utils";
 import { haptic } from "@/haptics";
 import { FolioText } from "@/components/ui/FolioText";
-import { GarmentPlate, pickShape } from "@/components/ui/GarmentPlate";
+import { ClothingImage } from "@/components/ui/ClothingImage";
 import { StampSeal } from "@/components/ui/StampSeal";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
@@ -53,13 +53,7 @@ export default function ItemDetailPage() {
       >
         <div className="washi-tape" aria-hidden />
         <div className="bg-paper-soft px-5 pb-6 pt-5 shadow-plate" style={{ borderRadius: 2 }}>
-          <GarmentPlate
-            colorHex={item.color_hex}
-            name={item.name}
-            shape={pickShape(item)}
-            interactive
-            className="aspect-[4/5] w-full"
-          />
+          <ClothingImage item={item} interactive className="aspect-[3/4] w-full" />
         </div>
         {/* 手写编号 */}
         <span className="absolute -left-6 top-6 font-hand text-2xl text-ink-faint/70">

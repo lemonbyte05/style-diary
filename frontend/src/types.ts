@@ -9,6 +9,8 @@ export interface Item {
   love_level: number;
   created_at: string;
   worn_count?: number;
+  /** 去背景透明 PNG（未来真实服装图），缺省时回退到版画占位 */
+  image_url?: string | null;
 }
 
 export interface OutfitItem {

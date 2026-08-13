@@ -6,9 +6,10 @@ import type { HomeData } from "@/types";
 import { formatFolioDate } from "@/utils";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
-import { GarmentPlate, pickShape } from "@/components/ui/GarmentPlate";
+import { ClothingImage } from "@/components/ui/ClothingImage";
 import { ArchivePlate } from "@/components/ui/ArchivePlate";
 import { StampSeal } from "@/components/ui/StampSeal";
+import { LeafSpray } from "@/components/ui/LeafSpray";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { haptic } from "@/haptics";
 
@@ -61,17 +62,56 @@ export default function HomePage() {
 
       <TodayEdit recommendation={ai_recommendation} containerRef={inspirationRef} />
 
-      <motion.footer
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="mt-20 text-center"
-      >
-        <div className="editorial-rule mx-auto mb-6 w-2/3" />
-        <p className="font-serif text-lg text-ink-faint/70">MY STYLE DIARY</p>
-        <FolioText className="mt-1.5">VOL.{masthead.vol} · 一本只属于你的时尚册</FolioText>
-      </motion.footer>
+      <PageColophon
+        vol={masthead.vol}
+        today={masthead.date}
+        outfit={today_outfit}
+        keywords={style_keywords}
+      />
     </div>
+  );
+}
+
+/* ---------- 卷首语页脚：轻量锚点，非卡片 ---------- */
+function PageColophon({
+  vol,
+  today,
+  outfit,
+  keywords,
+}: {
+  vol: number;
+  today: string;
+  outfit: HomeData["today_outfit"];
+  keywords: string[];
+}) {
+  return (
+    <motion.footer
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      className="mt-20"
+    >
+      <div className="editorial-rule w-full" />
+      <div className="mt-5 flex items-baseline justify-between">
+        <FolioText>LOOK NO.07</FolioText>
+        <FolioText>{formatFolioDate(today)}</FolioText>
+      </div>
+      <div className="mt-1.5 flex items-baseline justify-between">
+        <FolioText>
+          {outfit?.weather ?? "—"} · {outfit?.occasion ?? "—"}
+        </FolioText>
+        <span className="font-hand text-xs text-ink-faint">
+          {keywords.slice(0, 2).join(" / ")}
+        </span>
+      </div>
+      <p className="mt-6 text-center font-hand text-sm text-ink-soft">
+        下一个月，也要好好穿衣。
+      </p>
+      <div className="mt-8 text-center">
+        <p className="font-serif text-lg text-ink-faint/70">MY STYLE DIARY</p>
+        <FolioText className="mt-1.5">VOL.{vol} · 一本只属于你的时尚册</FolioText>
+      </div>
+    </motion.footer>
   );
 }
 
@@ -159,7 +199,6 @@ function TodayOutfit({
   }
 
   const [main, second] = outfit.items;
-  const tint = main?.color_hex ?? "#F3E9F2";
 
   return (
     <motion.section
@@ -170,61 +209,67 @@ function TodayOutfit({
       transition={{ duration: 0.7, ease: EASE }}
       className="relative scroll-mt-24 py-4"
     >
-      {/* 画布：柔和色晕，非圆角框 */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          minHeight: 500,
-          background: `radial-gradient(120% 85% at 50% 28%, ${tint}44, transparent 72%), linear-gradient(180deg, rgb(var(--c-paper-deep)) 0%, rgb(var(--c-paper)) 100%)`,
-        }}
-      >
+      {/* Editorial Collage：纸面拼贴，无背景色块 */}
+      <div className="relative">
+        {/* 极轻的植物线描点缀 */}
+        <LeafSpray className="pointer-events-none absolute -left-2 top-2 h-10 w-20 text-ink-faint/40" />
+
+        {/* 竖排卷标 */}
         <span
-          className="pointer-events-none absolute inset-y-4 right-2 text-folio tracking-[0.3em] text-ink/25"
+          className="pointer-events-none absolute inset-y-4 right-1 text-folio tracking-[0.3em] text-ink/25"
           style={{ writingMode: "vertical-rl" }}
         >
           LOOK 01 · {formatFolioDate(outfit.date)}
         </span>
 
-        {/* 服装版画叠加 */}
-        <motion.div style={{ y: plateY }} className="relative px-6 pb-24 pt-8">
+        {/* 服装拼贴：主角 + 配饰 */}
+        <motion.div style={{ y: plateY }} className="relative px-4 pt-10">
           <motion.button
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
             onClick={() => main && onOpen(main.id)}
-            className="relative block w-[60%] -rotate-2"
+            className="relative block w-[70%] -rotate-1"
           >
             <div className="washi-tape" aria-hidden />
-            <div className="bg-paper-soft px-4 pb-4 pt-4 shadow-plate" style={{ borderRadius: 2 }}>
-              {main && <GarmentPlate colorHex={main.color_hex} name={main.name} shape={pickShape(main)} className="aspect-[4/5] w-full" />}
+            <div className="bg-paper-soft px-3 pb-3 pt-3" style={{ borderRadius: 2 }}>
+              {main && <ClothingImage item={main} className="aspect-[3/4] w-full" />}
             </div>
-            {main && (
-              <p className="mt-2 pl-1 font-hand text-[13px] text-ink-soft">{main.name}</p>
-            )}
+            <p className="mt-2 pl-1 text-folio text-ink-soft">{main?.name}</p>
           </motion.button>
 
+          {/* 配饰：小一号，轻微覆盖主角 */}
           <motion.button
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
+            transition={{ duration: 0.7, delay: 0.32, ease: EASE }}
             onClick={() => second && onOpen(second.id)}
-            className="absolute right-10 top-[44%] block w-[40%] rotate-[1.5deg]"
+            className="absolute right-6 top-24 block w-[38%] rotate-2"
           >
-            <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
-              {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
+            <div className="bg-paper-soft px-2.5 pb-2.5 pt-2.5" style={{ borderRadius: 2 }}>
+              {second && <ClothingImage item={second} className="aspect-square w-full" />}
             </div>
+            <p className="mt-1.5 pr-1 text-right text-folio text-ink-faint">{second?.name}</p>
           </motion.button>
+
+          {/* 日期印章 + 手写记忆 */}
+          <span className="absolute bottom-2 left-1 -rotate-6 text-folio text-rose-deep/75">
+            ARCHIVE {formatFolioDate(outfit.date)}
+          </span>
+          <span className="absolute right-8 bottom-6 font-hand text-xs text-ink-faint">
+            {outfit.mood === "🎀" ? "像一封没有寄出的信" : outfit.note}
+          </span>
         </motion.div>
 
-        {/* 标题悬浮于版画之上 */}
-        <motion.div style={{ y: textY }} className="relative px-6 pb-7 pt-2">
+        {/* 编辑体标题层（浮于拼贴之下，非卡片） */}
+        <motion.div style={{ y: textY }} className="relative px-1 pb-2 pt-10">
           <div className="flex items-baseline gap-2 text-folio text-ink-soft">
             <span>{outfit.weather}</span>
             <span>·</span>
             <span>{outfit.occasion}</span>
-            <span className="ml-auto font-hand text-xs text-ink-faint">{formatFolioDate(outfit.date)}</span>
+            <span className="ml-auto">{formatFolioDate(outfit.date)}</span>
           </div>
           <h2 className="mt-2 font-serif text-[34px] leading-[1.15] text-ink">「{outfit.title}」</h2>
           <p className="mt-2 font-hand text-caption text-ink-soft">{outfit.note}</p>
@@ -356,16 +401,17 @@ function TodayEdit({
           <div className="relative mt-6 h-[320px]">
             <button onClick={() => main && openItem(main.id)} className="absolute left-0 top-0 w-[52%] -rotate-2">
               <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
-                {main && <GarmentPlate colorHex={main.color_hex} name={main.name} shape={pickShape(main)} className="aspect-[4/5] w-full" />}
+                {main && <ClothingImage item={main} className="aspect-[3/4] w-full" />}
               </div>
-              {main && <p className="mt-2 pl-1 font-hand text-xs text-ink-soft">{main.name}</p>}
+              {main && <p className="mt-2 pl-1 text-folio text-ink-soft">{main.name}</p>}
             </button>
             <button onClick={() => second && openItem(second.id)} className="absolute right-0 top-16 w-[40%] rotate-[1.5deg]">
               <div className="bg-paper-soft px-2.5 pb-2.5 pt-2.5 shadow-plate" style={{ borderRadius: 2 }}>
-                {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
+                {second && <ClothingImage item={second} className="aspect-[4/5] w-full" />}
               </div>
             </button>
             <span className="absolute bottom-0 right-1 font-hand text-[13px] text-ink-faint">curated, not random</span>
+            <span className="absolute left-0 top-1 text-folio text-ink-faint/80">EDIT NO.{String(main?.id ?? 1).padStart(2, "0")}</span>
           </div>
 
           <button

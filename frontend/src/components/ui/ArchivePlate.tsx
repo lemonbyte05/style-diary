@@ -1,13 +1,12 @@
 import { motion } from "framer-motion";
 import type { Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
-import { GarmentPlate, pickShape } from "@/components/ui/GarmentPlate";
+import { ClothingImage } from "@/components/ui/ClothingImage";
 import { haptic } from "@/haptics";
-import { formatInkDate } from "@/utils";
 
 /**
- * 档案收藏件（Polaroid 版）：白边相纸 + 轻微旋转 + 手写编号
- * 顶部可选和纸胶带 / 日期印章
+ * 档案收藏件（相纸感）：弱容器 + 轻旋转 + 手写编号
+ * 强调"照片/藏品"而非"商品卡"
  */
 export function ArchivePlate({
   item,
@@ -28,7 +27,7 @@ export function ArchivePlate({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 26 }}
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -43,31 +42,28 @@ export function ArchivePlate({
           haptic.tap();
           onOpen?.(item.id);
         }}
-        className={`relative block bg-paper-soft p-2.5 pb-3 shadow-plate transition-shadow duration-300 hover:shadow-3 ${
+        className={`relative block bg-paper-soft p-2 pb-2.5 transition-shadow duration-300 hover:shadow-2 ${
           tall ? "aspect-[4/5]" : "aspect-square"
         }`}
-        style={{ borderRadius: 3 }}
+        style={{ borderRadius: 2 }}
       >
         <span
-          className="pointer-events-none absolute inset-x-0 top-0 h-6"
+          className="pointer-events-none absolute inset-x-0 top-0 h-5"
           style={{
-            background: "linear-gradient(to bottom, rgba(255,255,255,0.5), transparent)",
-            borderTopLeftRadius: 3,
-            borderTopRightRadius: 3,
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.45), transparent)",
+            borderTopLeftRadius: 2,
+            borderTopRightRadius: 2,
           }}
         />
-        <div className="h-[calc(100%-2.2rem)] w-full">
-          <GarmentPlate colorHex={item.color_hex} name={item.name} shape={pickShape(item)} className="h-full w-full" />
+        <div className="h-[calc(100%-2rem)] w-full">
+          <ClothingImage item={item} className="h-full w-full" />
         </div>
-        <div className="mt-2 flex items-baseline justify-between">
-          <span className="max-w-[65%] truncate text-left font-hand text-[13px] leading-tight text-ink">
+        <div className="mt-1.5 flex items-baseline justify-between">
+          <span className="max-w-[70%] truncate text-left font-serif text-[13px] leading-tight text-ink">
             {item.name}
           </span>
           <FolioText>{String(index + 1).padStart(2, "0")}</FolioText>
         </div>
-        <span className="absolute bottom-1.5 right-2.5 text-folio text-ink-faint/70">
-          {formatInkDate(item.created_at).month}
-        </span>
       </button>
     </motion.div>
   );

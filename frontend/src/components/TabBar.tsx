@@ -70,13 +70,13 @@ export function TabBar() {
           {renderItem(LEFT_TABS[0])}
           {renderItem(LEFT_TABS[1])}
 
-          {/* 中央记录：更小的点 */}
+          {/* 中央记录：更小的点，更柔的玫瑰 */}
           <button
             onClick={() => go({ to: "/", state: { scrollTo: "outfit" }, label: "记录" })}
             aria-label="记录"
-            className="relative -top-5 mx-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose text-paper-soft shadow-2 transition-transform hover:scale-105 active:scale-95"
+            className="relative -top-4 mx-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose/90 text-paper-soft shadow-1 transition-transform hover:scale-105 active:scale-95"
           >
-            <Plus size={18} strokeWidth={1.4} />
+            <Plus size={16} strokeWidth={1.3} />
           </button>
 
           {RIGHT_TABS.map((t) => renderItem(t))}
