@@ -91,7 +91,7 @@ export default function AddItemPage() {
         transition={{ duration: 0.6, delay: 0.05, ease: EASE }}
         className="pt-7"
       >
-        <div className="relative mx-auto w-[70%]">
+        <div className="relative mx-auto w-[76%]">
           <div className="bg-paper-soft px-4 pb-4 pt-4 shadow-plate" style={{ borderRadius: 2 }}>
             <ClothingImage
               item={{ name: name || "新收藏", category, color_hex: color, image_url: imageUrl }}

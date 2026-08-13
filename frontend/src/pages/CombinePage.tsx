@@ -83,11 +83,11 @@ export default function CombinePage() {
             <p className="font-hand text-sm text-ink-faint">从下面挑几件，先看看拼起来的样子</p>
           </div>
         ) : (
-          <div className="relative mt-4 flex items-center justify-center" style={{ minHeight: 260 }}>
+          <div className="relative mt-4 flex items-center justify-center" style={{ minHeight: 340 }}>
             {selectedItems.map((item, i) => {
               const n = selectedItems.length;
-              const offset = (i - (n - 1) / 2) * 34;
-              const left = `calc(50% - 72px + ${offset}px)`;
+              const offset = (i - (n - 1) / 2) * 40;
+              const left = `calc(50% - 88px + ${offset}px)`;
               const rot = (i - (n - 1) / 2) * 2.4;
               return (
                 <motion.button
@@ -100,9 +100,9 @@ export default function CombinePage() {
                   style={{ left, rotate: rot, zIndex: i }}
                 >
                   <div className="bg-paper-soft p-2 shadow-plate" style={{ borderRadius: 2 }}>
-                    <ClothingImage item={item} className="h-40 w-32" />
+                    <ClothingImage item={item} className="h-48 w-40" />
                   </div>
-                  <p className="mt-1 max-w-[128px] truncate text-center font-hand text-[11px] text-ink-soft">{item.name}</p>
+                  <p className="mt-1 max-w-[160px] truncate text-center font-hand text-[11px] text-ink-soft">{item.name}</p>
                 </motion.button>
               );
             })}

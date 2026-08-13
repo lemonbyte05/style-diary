@@ -46,7 +46,7 @@ export function LookEntry({
               className={i === 0 ? "-rotate-2" : "-ml-5 mt-3 rotate-2"}
             >
               <div className="bg-paper-soft p-1.5 shadow-1" style={{ borderRadius: 2 }}>
-                <ClothingImage item={item} className="h-16 w-14" />
+                <ClothingImage item={item} className="h-20 w-16" />
               </div>
             </button>
           ))}

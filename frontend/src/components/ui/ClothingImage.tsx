@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { GarmentPlate, pickShape, type GarmentShape } from "@/components/ui/GarmentPlate";
 import type { Item } from "@/types";
 
@@ -13,35 +14,50 @@ const ASPECTS: Record<GarmentShape, string> = {
 /**
  * 服装图：Garment First 的核心组件
  *
- * - 优先使用去背景透明 PNG（item.image_url / src），object-contain 保留原比例、不裁切
- * - 透明 PNG 自带自然阴影（drop-shadow 跟随服装 alpha 轮廓）
- * - 无 PNG 时回退到服装版画占位，未来替换真实图后布局无需修改
+ * - 优先渲染去背景透明 PNG（item.image_url / src）
+ * - 真实图片默认 object-cover：填满整框、裁掉四周透明边距/留白，让衣服尽量大
+ * - 图片加载失败自动回退到服装版画占位，未来替换真实图后布局无需修改
  */
 export function ClothingImage({
   item,
   src,
   className = "",
   interactive = false,
+  fit = "cover",
 }: {
   item: Pick<Item, "name" | "category" | "color_hex" | "image_url">;
   src?: string | null;
   className?: string;
   interactive?: boolean;
+  fit?: "cover" | "contain";
 }) {
+  const [broken, setBroken] = useState(false);
   const shape = pickShape(item);
   const hasCustomAspect = /aspect-\[/.test(className);
   const aspect = hasCustomAspect ? "" : ASPECTS[shape];
   const url = src ?? item.image_url;
 
-  if (url) {
+  if (url && !broken) {
     return (
-      <div className={`relative ${aspect} ${className}`}>
+      <div className={`relative overflow-hidden ${aspect} ${className}`}>
         <img
           src={url}
           alt={item.name}
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-contain"
-          style={{ filter: "drop-shadow(0 16px 22px rgba(48, 40, 33, 0.18))" }}
+          onError={() => setBroken(true)}
+          className={`absolute inset-0 h-full w-full ${
+            fit === "cover" ? "object-cover" : "object-contain"
+          }`}
+          style={
+            fit === "contain"
+              ? { filter: "drop-shadow(0 14px 20px rgba(48, 40, 33, 0.16))" }
+              : undefined
+          }
+        />
+        {/* 柔和内影，让照片与纸面融为一体 */}
+        <span
+          className="pointer-events-none absolute inset-0"
+          style={{ boxShadow: "inset 0 0 44px rgba(48, 40, 33, 0.07)" }}
         />
       </div>
     );
