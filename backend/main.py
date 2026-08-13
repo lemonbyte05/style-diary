@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -17,8 +17,9 @@ from seed import seed, serialize_item
 
 GARMENTS_DIR = Path(__file__).parent / "static" / "garments"
 GARMENTS_DIR.mkdir(parents=True, exist_ok=True)
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10MB
 
-app = FastAPI(title="My Style Diary", version="0.3.0")
+app = FastAPI(title="My Style Diary", version="0.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -134,11 +135,27 @@ def items_create(body: ItemCreate) -> dict:
 async def items_upload(file: UploadFile = File(...)) -> dict:
     ext = Path(file.filename or "").suffix.lower()
     if ext not in (".png", ".jpg", ".jpeg", ".webp"):
-        return {"error": "不支持的图片格式"}
+        raise HTTPException(status_code=400, detail="不支持的图片格式")
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="图片超过 10MB 限制")
+    if len(data) == 0:
+        raise HTTPException(status_code=400, detail="空文件")
     name = f"{uuid.uuid4().hex}{ext}"
     dest = GARMENTS_DIR / name
-    dest.write_bytes(await file.read())
+    dest.write_bytes(data)
     return {"url": f"/static/garments/{name}"}
+
+
+def _remove_image_file(url: Optional[str]) -> None:
+    if not url:
+        return
+    try:
+        path = (Path(__file__).parent / url.lstrip("/")).resolve()
+        if str(path).startswith(str(GARMENTS_DIR.resolve())) and path.is_file():
+            path.unlink()
+    except OSError:
+        pass
 
 
 @app.get("/api/items/{item_id}")
@@ -146,7 +163,7 @@ def item_detail(item_id: int) -> dict:
     with get_connection() as conn:
         row = conn.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
         if not row:
-            return {"error": "not_found"}
+            raise HTTPException(status_code=404, detail="not_found")
         item = serialize_item(row)
         used = 0
         for o in conn.execute("SELECT item_ids FROM looks").fetchall():
@@ -166,7 +183,7 @@ def item_detail(item_id: int) -> dict:
 def items_update(item_id: int, body: ItemCreate) -> dict:
     with get_connection() as conn:
         if not conn.execute("SELECT 1 FROM items WHERE id = ?", (item_id,)).fetchone():
-            return {"error": "not_found"}
+            raise HTTPException(status_code=404, detail="not_found")
         conn.execute(
             """
             UPDATE items
@@ -192,6 +209,7 @@ def items_update(item_id: int, body: ItemCreate) -> dict:
 @app.delete("/api/items/{item_id}")
 def items_delete(item_id: int) -> dict:
     with get_connection() as conn:
+        row = conn.execute("SELECT image_url FROM items WHERE id = ?", (item_id,)).fetchone()
         conn.execute("DELETE FROM collection_items WHERE item_id = ?", (item_id,))
         for o in conn.execute("SELECT id, item_ids FROM looks").fetchall():
             ids = json.loads(o["item_ids"])
@@ -202,7 +220,8 @@ def items_delete(item_id: int) -> dict:
                     (json.dumps(ids), o["id"]),
                 )
         conn.execute("DELETE FROM items WHERE id = ?", (item_id,))
-        return {"ok": True}
+    _remove_image_file(row["image_url"] if row else None)
+    return {"ok": True}
 
 
 @app.get("/api/collections")
@@ -236,6 +255,8 @@ class CollectionCreate(BaseModel):
 @app.post("/api/collections")
 def collections_create(body: CollectionCreate) -> dict:
     name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="收藏夹名字不能为空")
     with get_connection() as conn:
         cur = conn.execute(
             "INSERT INTO collections (name, created_at) VALUES (?, ?)",
@@ -303,6 +324,8 @@ class LookCreate(BaseModel):
 
 @app.post("/api/looks")
 def looks_create(body: LookCreate) -> dict:
+    if not body.item_ids:
+        raise HTTPException(status_code=400, detail="搭配至少需要一件单品")
     with get_connection() as conn:
         cur = conn.execute(
             """
