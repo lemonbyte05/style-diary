@@ -20,19 +20,13 @@ export function TornDivider({
       className="my-5"
     >
       <div className="flex items-center gap-3">
-        <span
-          className="h-px flex-1"
-          style={{ borderTop: "1px dashed #E5DCCB" }}
-        />
+        <span className="h-px flex-1 border-t border-dashed border-edge" />
         {label && (
           <span className="whitespace-nowrap font-serif text-folio tracking-[0.2em] text-ink-faint">
             {label}
           </span>
         )}
-        <span
-          className="h-px flex-1"
-          style={{ borderTop: "1px dashed #E5DCCB" }}
-        />
+        <span className="h-px flex-1 border-t border-dashed border-edge" />
       </div>
       {note && (
         <p className="mt-1.5 text-center font-hand text-caption text-ink-faint/80">

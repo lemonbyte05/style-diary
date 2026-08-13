@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
 import { SpecimenImage } from "@/components/ui/SpecimenImage";
+import { haptic } from "@/haptics";
 
 /**
  * 拍立得卡：白边 16pt + 轻微旋转 + 手写题字
@@ -33,6 +34,7 @@ export function PolaroidCard({
       <div className="washi-tape" aria-hidden />
       <Link
         to={`/item/${item.id}`}
+        onClick={() => haptic.tap()}
         className="relative block rounded-lg bg-paper-soft p-3 pb-4 shadow-polaroid transition-shadow duration-300 hover:shadow-2"
       >
         <span

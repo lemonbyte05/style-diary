@@ -57,7 +57,7 @@ export function TabBar() {
                 )}
                 <Icon
                   size={18}
-                  strokeWidth={active ? 1.8 : 1.4}
+                  strokeWidth={1.5}
                   className={active ? "text-ink" : "text-ink-faint"}
                 />
                 <span
@@ -83,7 +83,7 @@ export function TabBar() {
               transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 4 }}
               className="relative"
             >
-              <Plus size={24} strokeWidth={1.8} className="text-paper-soft" />
+              <Plus size={24} strokeWidth={1.5} className="text-paper-soft" />
             </motion.span>
           </motion.button>
 
@@ -95,7 +95,7 @@ export function TabBar() {
                 onClick={() => go(tab)}
                 className="flex flex-col items-center gap-0.5 px-4 py-1"
               >
-                <Icon size={18} strokeWidth={1.4} className="text-ink-faint" />
+                <Icon size={18} strokeWidth={1.5} className="text-ink-faint" />
                 <span className="text-folio text-ink-faint">{tab.label}</span>
               </button>
             );

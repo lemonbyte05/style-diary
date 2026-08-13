@@ -3,6 +3,53 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --c-paper: 246 241 232;
+    --c-paper-deep: 239 231 218;
+    --c-paper-soft: 253 250 243;
+    --c-edge: 229 220 203;
+    --c-ink: 51 44 37;
+    --c-ink-soft: 108 95 83;
+    --c-ink-faint: 156 142 128;
+    --c-rose: 201 138 122;
+    --c-rose-deep: 176 111 96;
+    --c-rose-wash: 243 228 222;
+    --c-peach: 233 180 155;
+    --c-lavender: 183 165 196;
+    --c-dustyblue: 157 178 196;
+    --c-sage: 166 179 159;
+    --c-butter: 216 190 141;
+    --sh-1: 0 1px 12px rgba(51, 44, 37, 0.06);
+    --sh-2: 0 2px 16px rgba(51, 44, 37, 0.08);
+    --sh-3: 0 8px 32px rgba(51, 44, 37, 0.1);
+    --sh-hero: 0 12px 48px rgba(51, 44, 37, 0.14);
+    --sh-polaroid: 0 4px 10px rgba(51, 44, 37, 0.08), 0 1px 4px rgba(51, 44, 37, 0.05);
+  }
+
+  /* 夜间：纸面变深（设计系统深色纸面） */
+  [data-theme="dark"] {
+    --c-paper: 34 30 26;
+    --c-paper-deep: 43 38 33;
+    --c-paper-soft: 51 45 39;
+    --c-edge: 58 51 43;
+    --c-ink: 240 231 219;
+    --c-ink-soft: 201 187 168;
+    --c-ink-faint: 138 124 108;
+    --c-rose: 208 154 140;
+    --c-rose-deep: 196 133 118;
+    --c-rose-wash: 58 43 38;
+    --c-peach: 201 158 137;
+    --c-lavender: 158 142 174;
+    --c-dustyblue: 133 153 168;
+    --c-sage: 143 155 137;
+    --c-butter: 190 164 121;
+    --sh-1: 0 1px 12px rgba(0, 0, 0, 0.35);
+    --sh-2: 0 2px 16px rgba(0, 0, 0, 0.4);
+    --sh-3: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --sh-hero: 0 12px 48px rgba(0, 0, 0, 0.5);
+    --sh-polaroid: 0 4px 10px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -31,31 +78,6 @@
 }
 
 @layer components {
-  /* 撕线分隔 */
-  .torn-divider {
-    @apply relative my-4 h-px w-full;
-    background: repeating-linear-gradient(
-      to right,
-      #e5dccb 0,
-      #e5dccb 8px,
-      transparent 8px,
-      transparent 16px
-    );
-  }
-  .torn-divider::after {
-    content: attr(data-label);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    padding: 0 10px;
-    background: #f6f1e8;
-    color: #9c8e80;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    white-space: nowrap;
-  }
-
   /* 首字下沉（杂志编辑体） */
   .drop-cap::first-letter {
     float: left;
@@ -63,7 +85,17 @@
     font-family: 'Songti SC', 'Noto Serif SC', serif;
     font-size: 3.2em;
     line-height: 0.9;
-    color: #B06F60;
+    color: rgb(var(--c-rose-deep));
+  }
+
+  /* 票根缺口 */
+  .ticket-notch {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: rgb(var(--c-paper));
+    box-shadow: inset 0 0 0 1px rgb(var(--c-edge));
   }
 
   /* 装订孔（收藏册打孔） */
@@ -71,7 +103,7 @@
     width: 7px;
     height: 7px;
     border-radius: 999px;
-    background: #f6f1e8;
+    background: rgb(var(--c-paper));
     box-shadow: inset 0 0 0 1px rgba(229, 220, 203, 0.95);
   }
 
@@ -83,20 +115,10 @@
     transform: translateX(-50%) rotate(-3deg);
     width: 84px;
     height: 18px;
-    background: linear-gradient(135deg, rgba(185, 168, 199, 0.55), rgba(217, 190, 141, 0.5));
+    background: linear-gradient(135deg, rgba(183, 165, 196, 0.55), rgba(216, 190, 141, 0.5));
     backdrop-filter: blur(1px);
     box-shadow: 0 1px 3px rgba(51, 44, 37, 0.08);
     border-left: 1px dashed rgba(51, 44, 37, 0.08);
     border-right: 1px dashed rgba(51, 44, 37, 0.08);
-  }
-
-  /* 票根缺口 */
-  .ticket-notch {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    background: #f6f1e8;
-    box-shadow: inset 0 0 0 1px #e5dccb;
   }
 }

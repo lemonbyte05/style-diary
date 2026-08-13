@@ -11,6 +11,8 @@ import { KeywordChip } from "@/components/ui/KeywordChip";
 import { PolaroidCard } from "@/components/ui/PolaroidCard";
 import { StampSeal } from "@/components/ui/StampSeal";
 import { SpecimenImage } from "@/components/ui/SpecimenImage";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { haptic } from "@/haptics";
 
 const EASE_OUT = [0.25, 0.46, 0.45, 0.94] as const;
 
@@ -46,7 +48,8 @@ export default function HomePage() {
   const { masthead, mood, today_outfit, style_keywords, recent_collections, ai_recommendation } = data;
 
   return (
-    <div className="mx-auto max-w-md px-6 pb-36 pt-8">
+    <div className="relative mx-auto max-w-md px-6 pb-36 pt-8">
+      <ThemeToggle className="absolute right-6 top-2 z-10" />
       <PageIntro vol={masthead.vol} />
       <SectionDiary mood={mood} containerRef={diaryRef} />
       <SectionOutfit outfit={today_outfit} containerRef={outfitRef} onNavigate={(id) => navigate(`/item/${id}`)} />
@@ -228,7 +231,7 @@ function SectionOutfit({
         </div>
       ) : (
         <div className="relative flex h-[360px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-edge bg-paper-soft">
-          <Camera size={32} strokeWidth={1.2} className="mb-3 text-ink-faint" />
+          <Camera size={32} strokeWidth={1.5} className="mb-3 text-ink-faint" />
           <p className="font-hand text-lg text-ink-soft">衣橱还空着，等你的第一件收藏</p>
           <FolioText className="mt-2">拍下今日穿搭</FolioText>
         </div>
@@ -271,7 +274,7 @@ function SectionCollections({
       >
         <h3 className="font-serif text-h2 text-ink">最近收藏</h3>
         <button onClick={onViewAll} className="flex items-center gap-0.5 text-folio text-ink-faint transition-colors hover:text-rose">
-          查看全部 <ChevronRight size={13} strokeWidth={1.6} />
+          查看全部 <ChevronRight size={13} strokeWidth={1.5} />
         </button>
       </motion.div>
       <div className="-mx-6 overflow-x-auto px-6 pb-4" style={{ scrollbarWidth: "none" }}>
@@ -328,8 +331,7 @@ function SectionAI({
       <motion.div
         animate={shaking ? { rotate: [0, -2, 2, -2, 2, 0], x: [0, -4, 4, -4, 4, 0] } : {}}
         transition={{ duration: 0.5 }}
-        className="relative mt-4 rounded-lg bg-paper-soft p-5 pb-6 shadow-1"
-        style={{ border: "1px solid rgba(229,220,203,0.7)" }}
+        className="relative mt-4 rounded-lg border border-edge/70 bg-paper-soft p-5 pb-6 shadow-1"
       >
         <div className="ticket-notch -left-2 top-1/2 -translate-y-1/2" />
         <div className="ticket-notch -right-2 top-1/2 -translate-y-1/2" />
@@ -340,7 +342,7 @@ function SectionAI({
             onClick={regenerate}
             className="flex items-center gap-1 text-folio text-rose transition-colors hover:text-rose-deep"
           >
-            <Shuffle size={13} strokeWidth={1.6} /> 换一套
+            <Shuffle size={13} strokeWidth={1.5} /> 换一套
           </button>
         </div>
 
@@ -377,12 +379,13 @@ function SectionAI({
         <div className="mt-4 border-t border-dashed border-edge pt-3 text-center">
           <button
             onClick={() => {
+              haptic.stamp();
               setSaved(true);
               setTimeout(() => setSaved(false), 1600);
             }}
             className="flex items-center gap-1.5 rounded-full bg-rose px-5 py-2 text-caption text-paper-soft shadow-2 transition-transform hover:scale-[1.02] active:scale-95"
           >
-            <BookmarkPlus size={14} strokeWidth={1.6} /> 这套不错，记下来
+            <BookmarkPlus size={14} strokeWidth={1.5} /> 这套不错，记下来
           </button>
           <StampSeal show={saved} />
         </div>

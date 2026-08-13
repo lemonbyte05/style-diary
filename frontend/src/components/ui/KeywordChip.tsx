@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { haptic } from "@/haptics";
 
 /** 关键词胶囊：点击时墨色从角落晕染填充（盖章感） */
 export function KeywordChip({
@@ -19,7 +20,10 @@ export function KeywordChip({
       viewport={{ once: true }}
       transition={{ duration: 0.45, delay, ease: "easeOut" }}
       whileTap={{ scale: 0.94 }}
-      onClick={onClick}
+      onClick={() => {
+        haptic.tap();
+        onClick?.();
+      }}
       className={`relative overflow-hidden rounded-full px-4 py-1.5 text-caption transition-colors duration-300 ${
         active
           ? "bg-ink text-paper"

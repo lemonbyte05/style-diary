@@ -5,6 +5,7 @@ import { ArrowLeft, Sparkles, PenLine } from "lucide-react";
 import { api } from "@/api";
 import type { Item } from "@/types";
 import { formatInkDate } from "@/utils";
+import { haptic } from "@/haptics";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
 import { KeywordChip } from "@/components/ui/KeywordChip";
@@ -39,7 +40,7 @@ export default function ItemDetailPage() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-folio text-ink-faint transition-colors hover:text-ink"
         >
-          <ArrowLeft size={15} strokeWidth={1.6} /> 收藏册
+          <ArrowLeft size={15} strokeWidth={1.5} /> 收藏册
         </button>
         <FolioText>NO.{String(item.id).padStart(2, "0")}</FolioText>
       </motion.header>
@@ -123,7 +124,7 @@ export default function ItemDetailPage() {
               {inkDate.year} · 珍藏
             </span>
             <button className="flex items-center gap-1 text-folio text-rose transition-colors hover:text-rose-deep">
-              <Sparkles size={13} strokeWidth={1.6} /> 回顾穿搭
+              <Sparkles size={13} strokeWidth={1.5} /> 回顾穿搭
             </button>
           </div>
         </div>
@@ -134,19 +135,20 @@ export default function ItemDetailPage() {
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={() => {
+            haptic.stamp();
             setStamped(true);
             setTimeout(() => setStamped(false), 1600);
           }}
           className="relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-full bg-rose py-3 text-body text-paper-soft shadow-2 transition-transform hover:scale-[1.01]"
         >
-          <Sparkles size={16} strokeWidth={1.6} /> 加入今日穿搭
+          <Sparkles size={16} strokeWidth={1.5} /> 加入今日穿搭
           <StampSeal show={stamped} label="已放入" />
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.96 }}
           className="flex items-center gap-2 rounded-full border border-edge bg-paper-soft px-6 py-3 text-body text-ink-soft shadow-1 transition-colors hover:border-rose hover:text-rose"
         >
-          <PenLine size={16} strokeWidth={1.6} /> 编辑
+          <PenLine size={16} strokeWidth={1.5} /> 编辑
         </motion.button>
       </div>
     </div>
