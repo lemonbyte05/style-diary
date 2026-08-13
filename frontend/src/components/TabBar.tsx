@@ -43,7 +43,7 @@ export function TabBar() {
         onClick={() => go(tab)}
         className="relative flex flex-1 flex-col items-center gap-1 py-1"
       >
-        {active && <span className="absolute -top-[13px] h-[3px] w-6 bg-rose" />}
+        {active && <span className="absolute bottom-[-7px] h-[2px] w-5 bg-rose" />}
         {tab.textOnly ? (
           <span className={`font-serif text-[13px] tracking-[0.2em] ${active ? "text-ink" : "text-ink-faint"}`}>
             LOOK

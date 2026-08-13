@@ -45,7 +45,6 @@ export default function HomePage() {
 
   return (
     <div className="relative mx-auto max-w-md px-7 pb-40 pt-9">
-      <ThemeToggle className="absolute right-6 top-3 z-10" />
       <Masthead vol={masthead.vol} />
 
       <TodayDiary mood={mood} today={masthead.date} containerRef={diaryRef} />
@@ -87,9 +86,12 @@ function Masthead({ vol }: { vol: number }) {
     >
       <div className="flex items-baseline justify-between">
         <FolioText>✦ PERSONAL FASHION ARCHIVE</FolioText>
-        <FolioText>VOL.{vol}</FolioText>
+        <span className="flex items-center gap-4">
+          <ThemeToggle />
+          <FolioText>VOL.{vol}</FolioText>
+        </span>
       </div>
-      <h1 className="mt-5 font-serif text-[52px] leading-[1.05] text-ink">我的衣橱</h1>
+      <h1 className="mt-5 font-serif text-display leading-[1.05] text-ink">我的衣橱</h1>
       <div className="mt-3 flex items-baseline justify-between">
         <FolioText>AUGUST · ARCHIVE NO.{vol}</FolioText>
         <span className="font-hand text-sm text-ink-faint">只属于我的时尚册</span>
@@ -208,7 +210,7 @@ function TodayOutfit({
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
             onClick={() => second && onOpen(second.id)}
-            className="absolute right-10 top-[52%] block w-[42%] rotate-[1.5deg]"
+            className="absolute right-10 top-[44%] block w-[40%] rotate-[1.5deg]"
           >
             <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
               {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
