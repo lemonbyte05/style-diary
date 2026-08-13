@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    @apply bg-rose-wash text-ink;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(51, 44, 37, 0.18);
+    border-radius: 8px;
+  }
+}
+
+@layer components {
+  /* 撕线分隔 */
+  .torn-divider {
+    @apply relative my-4 h-px w-full;
+    background: repeating-linear-gradient(
+      to right,
+      #e5dccb 0,
+      #e5dccb 8px,
+      transparent 8px,
+      transparent 16px
+    );
+  }
+  .torn-divider::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0 10px;
+    background: #f6f1e8;
+    color: #9c8e80;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  /* 和纸胶带 */
+  .washi-tape {
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    width: 84px;
+    height: 18px;
+    background: linear-gradient(135deg, rgba(185, 168, 199, 0.55), rgba(217, 190, 141, 0.5));
+    backdrop-filter: blur(1px);
+    box-shadow: 0 1px 3px rgba(51, 44, 37, 0.08);
+    border-left: 1px dashed rgba(51, 44, 37, 0.08);
+    border-right: 1px dashed rgba(51, 44, 37, 0.08);
+  }
+
+  /* 票根缺口 */
+  .ticket-notch {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: #f6f1e8;
+    box-shadow: inset 0 0 0 1px #e5dccb;
+  }
+}
