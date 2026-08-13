@@ -86,8 +86,9 @@ export default function CombinePage() {
           <div className="relative mt-4 flex items-center justify-center" style={{ minHeight: 260 }}>
             {selectedItems.map((item, i) => {
               const n = selectedItems.length;
-              const left = `calc(50% + ${(i - (n - 1) / 2) * 30}px)`;
-              const rot = (i - (n - 1) / 2) * 2.2;
+              const offset = (i - (n - 1) / 2) * 34;
+              const left = `calc(50% - 72px + ${offset}px)`;
+              const rot = (i - (n - 1) / 2) * 2.4;
               return (
                 <motion.button
                   key={item.id}

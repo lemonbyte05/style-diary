@@ -47,11 +47,13 @@ export default function ItemDetailPage() {
         initial={{ opacity: 0, scale: 0.985 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: EASE }}
-        className="relative mx-auto mt-4 w-[82%] -rotate-1"
+        className="relative mx-auto mt-4 w-[82%]"
       >
-        <div className="washi-tape" aria-hidden />
-        <div className="bg-paper-soft px-5 pb-6 pt-5 shadow-plate" style={{ borderRadius: 2 }}>
-          <ClothingImage item={item} interactive className="aspect-[3/4] w-full" />
+        <div className="relative -rotate-1">
+          <div className="washi-tape" aria-hidden />
+          <div className="bg-paper-soft px-5 pb-6 pt-5 shadow-plate" style={{ borderRadius: 2 }}>
+            <ClothingImage item={item} interactive className="aspect-[3/4] w-full" />
+          </div>
         </div>
         {/* 手写编号 */}
         <span className="absolute -left-6 top-6 font-hand text-2xl text-ink-faint/70">
@@ -115,7 +117,7 @@ export default function ItemDetailPage() {
         </p>
 
         <div className="mt-8 flex items-baseline justify-between border-t border-edge/60 pt-4">
-          <FolioText>搭配过 {item.worn_count ?? 0} 次</FolioText>
+          <FolioText>出现在 {item.worn_count ?? 0} 套搭配里</FolioText>
           <FolioText>REVIEW</FolioText>
         </div>
       </motion.div>

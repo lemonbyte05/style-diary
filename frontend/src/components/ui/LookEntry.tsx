@@ -8,14 +8,31 @@ import { haptic } from "@/haptics";
 /**
  * 搭配条目（编辑体，非卡片）：日期 + 版画 + 标题 + 手写短句
  */
-export function LookEntry({ look }: { look: Look }) {
+export function LookEntry({
+  look,
+  manage = false,
+  onDelete,
+}: {
+  look: Look;
+  manage?: boolean;
+  onDelete?: () => void;
+}) {
   const navigate = useNavigate();
 
   return (
     <div className="border-b border-edge/50 py-5 last:border-0">
       <div className="flex items-baseline justify-between">
         <FolioText>{formatFolioDate(look.created_at)}</FolioText>
-        <FolioText>LOOK NO.{String(look.id).padStart(2, "0")}</FolioText>
+        {manage ? (
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 text-folio text-terra transition-colors hover:text-ink"
+          >
+            ✕ 删除
+          </button>
+        ) : (
+          <FolioText>LOOK NO.{String(look.id).padStart(2, "0")}</FolioText>
+        )}
       </div>
       <div className="mt-3 flex items-center gap-4">
         <div className="flex shrink-0 items-start">

@@ -10,11 +10,21 @@ const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 export default function LookbookPage() {
   const [looks, setLooks] = useState<Look[]>([]);
+  const [managing, setManaging] = useState(false);
 
   const load = () => {
     api.looks().then((r) => setLooks(r.looks)).catch(() => setLooks([]));
   };
   useEffect(load, []);
+
+  const remove = async (id: number) => {
+    try {
+      await api.lookDelete(id);
+      setLooks((ls) => ls.filter((l) => l.id !== id));
+    } catch {
+      /* 保持原状 */
+    }
+  };
 
   const groups = useMemo(() => {
     const map = new Map<string, Look[]>();
@@ -34,7 +44,12 @@ export default function LookbookPage() {
       >
         <div className="flex items-baseline justify-between">
           <FolioText>✦ PERSONAL FASHION ARCHIVE</FolioText>
-          <FolioText>VOL.02</FolioText>
+          <button
+            onClick={() => setManaging((m) => !m)}
+            className={`text-folio transition-colors ${managing ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
+          >
+            {managing ? "完成" : "整理"}
+          </button>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">LOOKBOOK</h1>
         <p className="mt-2 font-serif text-caption text-ink-soft">我的搭配</p>
@@ -62,7 +77,7 @@ export default function LookbookPage() {
                 <FolioText>{list.length} LOOKS</FolioText>
               </div>
               {list.map((o) => (
-                <LookEntry key={o.id} look={o} />
+                <LookEntry key={o.id} look={o} manage={managing} onDelete={() => remove(o.id)} />
               ))}
             </section>
           );

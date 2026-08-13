@@ -144,7 +144,7 @@ function renderWall(
         <div key={`band-${i}`} className="col-span-2">
           <div className="flex items-baseline justify-between">
             <FolioText>COLLECTION NO.{String(Math.floor(i / 4) + 1).padStart(2, "0")}</FolioText>
-            <span className="font-hand text-xs text-ink-faint">顺手搭在一起的一件</span>
+            <span className="font-hand text-xs text-ink-faint">并列陈列，可勾选组合</span>
           </div>
           <div className="mt-3 flex gap-4">
             {band.map((item, j) => (
