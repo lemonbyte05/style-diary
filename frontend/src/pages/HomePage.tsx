@@ -208,7 +208,7 @@ function TodayOutfit({
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
             onClick={() => second && onOpen(second.id)}
-            className="absolute right-3 top-[52%] block w-[42%] rotate-[1.5deg]"
+            className="absolute right-10 top-[52%] block w-[42%] rotate-[1.5deg]"
           >
             <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
               {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
@@ -305,6 +305,9 @@ function TodayEdit({
   const [rec, setRec] = useState(recommendation);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const navigate = useNavigate();
+
+  const openItem = (id: number) => navigate(`/item/${id}`);
 
   const regenerate = async () => {
     if (loading) return;
@@ -349,13 +352,13 @@ function TodayEdit({
 
           {/* 版画叠加 */}
           <div className="relative mt-6 h-[320px]">
-            <button onClick={() => main && console.log(main.id)} className="absolute left-0 top-0 w-[52%] -rotate-2">
+            <button onClick={() => main && openItem(main.id)} className="absolute left-0 top-0 w-[52%] -rotate-2">
               <div className="bg-paper-soft px-3 pb-3 pt-3 shadow-plate" style={{ borderRadius: 2 }}>
                 {main && <GarmentPlate colorHex={main.color_hex} name={main.name} shape={pickShape(main)} className="aspect-[4/5] w-full" />}
               </div>
               {main && <p className="mt-2 pl-1 font-hand text-xs text-ink-soft">{main.name}</p>}
             </button>
-            <button onClick={() => second && console.log(second.id)} className="absolute right-0 top-16 w-[40%] rotate-[1.5deg]">
+            <button onClick={() => second && openItem(second.id)} className="absolute right-0 top-16 w-[40%] rotate-[1.5deg]">
               <div className="bg-paper-soft px-2.5 pb-2.5 pt-2.5 shadow-plate" style={{ borderRadius: 2 }}>
                 {second && <GarmentPlate colorHex={second.color_hex} name={second.name} shape={pickShape(second)} className="aspect-[4/5] w-full" />}
               </div>

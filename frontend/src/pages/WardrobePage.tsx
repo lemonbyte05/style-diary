@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { api } from "@/api";
 import type { Item } from "@/types";
@@ -12,6 +13,7 @@ export default function WardrobePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [category, setCategory] = useState("全部");
   const [query, setQuery] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.items(category).then((res) => setItems(res.items));
@@ -86,59 +88,52 @@ export default function WardrobePage() {
         </div>
       ) : (
         <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
-          {filtered.map((item, i) => {
-            const mod = i % 4;
-            if (mod === 0) {
-              return <FeaturedBand key={item.id} items={filtered.slice(i, i + 2)} no={Math.floor(i / 4) + 1} onOpen={(id) => (window.location.href = `/item/${id}`)} />;
-            }
-            return (
-              <div key={item.id} className={mod === 2 ? "mt-10" : ""}>
-                <ArchivePlate
-                  item={item}
-                  index={i}
-                  rotate={mod === 1 ? -1.6 : 1.2}
-                  tall={mod !== 2}
-                  tape={i === 1 || i === 5}
-                  onOpen={(id) => (window.location.href = `/item/${id}`)}
-                />
-              </div>
-            );
-          })}
+          {renderWall(filtered, (id) => navigate(`/item/${id}`))}
         </div>
       )}
     </div>
   );
 }
 
-/* ---------- 横向 Collection 带：两件并排 ---------- */
-function FeaturedBand({
-  items,
-  no,
-  onOpen,
-}: {
-  items: Item[];
-  no: number;
-  onOpen: (id: number) => void;
-}) {
-  return (
-    <div className="col-span-2">
-      <div className="flex items-baseline justify-between">
-        <FolioText>COLLECTION NO.{String(no).padStart(2, "0")}</FolioText>
-        <span className="font-hand text-xs text-ink-faint">顺手搭在一起的一件</span>
-      </div>
-      <div className="mt-3 flex gap-4">
-        {items.map((item, j) => (
-          <div key={item.id} className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}>
-            <ArchivePlate
-              item={item}
-              index={item.id}
-              rotate={j === 0 ? -1.4 : 1.6}
-              tall={false}
-              onOpen={onOpen}
-            />
+/* ---------- 编辑式档案墙：横向 Collection 带 + 大小错落 ---------- */
+function renderWall(items: Item[], onOpen: (id: number) => void) {
+  const nodes: React.ReactNode[] = [];
+  for (let i = 0; i < items.length; i++) {
+    if (i % 4 === 0) {
+      const band = items.slice(i, i + 2);
+      if (band.length === 0) continue;
+      nodes.push(
+        <div key={`band-${i}`} className="col-span-2">
+          <div className="flex items-baseline justify-between">
+            <FolioText>COLLECTION NO.{String(Math.floor(i / 4) + 1).padStart(2, "0")}</FolioText>
+            <span className="font-hand text-xs text-ink-faint">顺手搭在一起的一件</span>
           </div>
-        ))}
+          <div className="mt-3 flex gap-4">
+            {band.map((item, j) => (
+              <div key={item.id} className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}>
+                <ArchivePlate item={item} index={item.id} rotate={j === 0 ? -1.4 : 1.6} tall={false} onOpen={onOpen} />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+      i++;
+      continue;
+    }
+    const mod = i % 4;
+    const item = items[i];
+    nodes.push(
+      <div key={item.id} className={mod === 2 ? "mt-10" : ""}>
+        <ArchivePlate
+          item={item}
+          index={i}
+          rotate={mod === 1 ? -1.6 : 1.2}
+          tall={mod !== 2}
+          tape={i === 1 || i === 5}
+          onOpen={onOpen}
+        />
       </div>
-    </div>
-  );
+    );
+  }
+  return nodes;
 }

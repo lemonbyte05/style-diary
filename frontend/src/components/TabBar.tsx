@@ -2,15 +2,23 @@ import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Shirt, Sparkles, User, Plus } from "lucide-react";
 
-const LEFT_TABS = [
-  { to: "/wardrobe", label: "衣橱", icon: Shirt, state: undefined },
-  { to: "/", label: "LOOK", icon: null, state: { scrollTo: "outfit" } },
-] as const;
+interface TabItem {
+  to: string;
+  label: string;
+  icon: typeof Shirt | null;
+  textOnly: boolean;
+  state?: object;
+}
 
-const RIGHT_TABS = [
-  { to: "/", label: "EDIT", icon: Sparkles, state: { scrollTo: "inspiration" } },
-  { to: "/", label: "我的", icon: User, state: { scrollTo: "diary" } },
-] as const;
+const LEFT_TABS: TabItem[] = [
+  { to: "/wardrobe", label: "衣橱", icon: Shirt, textOnly: false },
+  { to: "/", label: "LOOK", icon: null, textOnly: true, state: { scrollTo: "outfit" } },
+];
+
+const RIGHT_TABS: TabItem[] = [
+  { to: "/", label: "EDIT", icon: Sparkles, textOnly: false, state: { scrollTo: "inspiration" } },
+  { to: "/", label: "我的", icon: User, textOnly: false, state: { scrollTo: "diary" } },
+];
 
 function isActive(to: string, pathname: string): boolean {
   if (to === "/") return pathname === "/";
@@ -26,7 +34,7 @@ export function TabBar() {
     else navigate(item.to);
   };
 
-  const renderItem = (tab: { to: string; label: string; icon: typeof Shirt | null; state?: object }) => {
+  const renderItem = (tab: TabItem) => {
     const Icon = tab.icon;
     const active = isActive(tab.to, pathname);
     return (
@@ -36,12 +44,16 @@ export function TabBar() {
         className="relative flex flex-1 flex-col items-center gap-1 py-1"
       >
         {active && <span className="absolute -top-[13px] h-[3px] w-6 bg-rose" />}
-        {Icon ? (
-          <Icon size={17} strokeWidth={1.25} className={active ? "text-ink" : "text-ink-faint"} />
+        {tab.textOnly ? (
+          <span className={`font-serif text-[13px] tracking-[0.2em] ${active ? "text-ink" : "text-ink-faint"}`}>
+            LOOK
+          </span>
         ) : (
-          <span className={`text-folio ${active ? "text-ink" : "text-ink-faint"}`}>LOOK</span>
+          <>
+            {Icon && <Icon size={17} strokeWidth={1.25} className={active ? "text-ink" : "text-ink-faint"} />}
+            <span className={`text-folio ${active ? "text-ink" : "text-ink-faint"}`}>{tab.label}</span>
+          </>
         )}
-        <span className={`text-folio ${active ? "text-ink" : "text-ink-faint"}`}>{tab.label}</span>
       </button>
     );
   };
@@ -56,7 +68,7 @@ export function TabBar() {
           className="relative flex items-center border-t border-edge/60 bg-paper/90 px-7 pb-[max(env(safe-area-inset-bottom),10px)] pt-2 backdrop-blur-sm"
         >
           {renderItem(LEFT_TABS[0])}
-          {renderItem({ ...LEFT_TABS[1], icon: null })}
+          {renderItem(LEFT_TABS[1])}
 
           {/* 中央记录：更小的点 */}
           <button
