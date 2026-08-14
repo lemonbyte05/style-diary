@@ -1,3 +1,9 @@
+/** 品类（录入 / 筛选 / 版画共用） */
+export const CATEGORIES = ["上衣", "下装", "裙装", "外套", "鞋", "包", "配饰", "其他"] as const;
+
+/** 可选字段的月份展示名 */
+export const SEASONS = ["春", "夏", "秋", "冬", "四季"] as const;
+
 export interface Item {
   id: number;
   name: string;
@@ -16,8 +22,13 @@ export interface Item {
   collections?: number[];
   /** 去背景透明 PNG（未来真实服装图），缺省时回退到版画占位 */
   image_url?: string | null;
-  /** 图类型：cutout=透明PNG（contain 展示），photo=普通照片（cover 展示） */
+  /** 图类型：cutout=透明PNG（contain 展示），photo=普通照片 */
   image_type?: "cutout" | "photo";
+  season?: string;
+  brand?: string;
+  material?: string;
+  purchased_at?: string;
+  price?: string;
 }
 
 /** 手动搭配（我的搭配） */

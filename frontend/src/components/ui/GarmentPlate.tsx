@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { shade } from "@/utils";
 
-export type GarmentShape = "top" | "dress" | "skirt" | "jacket" | "bag";
+export type GarmentShape = "top" | "dress" | "skirt" | "jacket" | "bag" | "pants" | "shoes";
 
 /** 时装版画轮廓（viewBox 0 0 160 200，4:5 竖版） */
 const PATHS: Record<Exclude<GarmentShape, "skirt">, string> = {
@@ -27,6 +27,20 @@ const PATHS: Record<Exclude<GarmentShape, "skirt">, string> = {
     M54 78 V58 C54 48 62 42 70 42 H90 C98 42 106 48 106 58 V78
     H114 V126 H46 V78 Z
   `,
+  pants: `
+    M46 40 C46 30 58 26 64 26 L68 32 L92 32 L96 26
+    C102 26 114 30 114 40 L106 58 C101 57 100 54 101 50 L98 62
+    C98 118 102 152 103 160 C104 166 96 171 90 169
+    C84 167 82 161 85 155 L80 96 L80 96 L75 155
+    C75 162 71 168 63 168 C59 168 55 164 57 158 L61 98
+    C59 78 52 60 46 40 Z
+  `,
+  shoes: `
+    M34 150 C30 150 26 146 28 140 L44 86
+    C49 68 66 60 82 60 C90 60 96 63 99 68 L99 96
+    C103 96 107 100 107 106 L105 120 C105 126 101 130 95 130 L91 130
+    L93 138 C94 146 88 152 80 152 Z
+  `,
 };
 
 const SKIRT_BODY = `
@@ -40,6 +54,9 @@ export function pickShape(item: { category: string; name: string }): GarmentShap
   const n = item.name;
   if (c === "裙装") return n.includes("半裙") ? "skirt" : "dress";
   if (c === "外套") return "jacket";
+  if (c === "下装") return "pants";
+  if (c === "鞋") return "shoes";
+  if (c === "包") return "bag";
   if (c === "配饰") return "bag";
   return "top";
 }

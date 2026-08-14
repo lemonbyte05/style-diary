@@ -14,7 +14,7 @@ import { haptic } from "@/haptics";
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 /** 服装角色 → 穿搭板上的位置（x/y 为容器百分比，w/h 为 px，z 控制前后叠压） */
-type Role = "outer" | "dress" | "top" | "bottom" | "bag" | "accessory";
+type Role = "outer" | "dress" | "top" | "bottom" | "bag" | "shoes" | "accessory";
 
 const ROLE_OF_SHAPE: Record<GarmentShape, Role> = {
   jacket: "outer",
@@ -22,6 +22,8 @@ const ROLE_OF_SHAPE: Record<GarmentShape, Role> = {
   skirt: "bottom",
   top: "top",
   bag: "bag",
+  pants: "bottom",
+  shoes: "shoes",
 };
 
 interface Slot {
@@ -39,6 +41,7 @@ const SLOTS: Record<Role, Slot> = {
   top: { x: 44, y: 4, w: 112, h: 138, rot: 1.8, z: 2 },
   bottom: { x: 48, y: 42, w: 126, h: 130, rot: -1.6, z: 2 },
   bag: { x: 80, y: 62, w: 96, h: 96, rot: 3.2, z: 2 },
+  shoes: { x: 14, y: 62, w: 84, h: 84, rot: 2.2, z: 1 },
   accessory: { x: 86, y: 32, w: 78, h: 78, rot: -2.4, z: 1 },
 };
 

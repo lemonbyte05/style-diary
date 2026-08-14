@@ -96,6 +96,11 @@ export default function EditItemPage() {
           love_level: item.love_level,
           image_url: item.image_url ?? null,
           image_type: item.image_type ?? "photo",
+          season: item.season ?? "",
+          brand: item.brand ?? "",
+          material: item.material ?? "",
+          purchased_at: item.purchased_at ?? "",
+          price: item.price ?? "",
         }}
         submitLabel="SAVE CHANGES"
         onSubmit={async (payload) => {

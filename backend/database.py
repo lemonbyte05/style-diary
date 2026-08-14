@@ -28,6 +28,11 @@ def init_db() -> None:
                 love_level INTEGER DEFAULT 3,
                 image_url TEXT,
                 image_type TEXT DEFAULT 'photo',
+                season TEXT DEFAULT '',
+                brand TEXT DEFAULT '',
+                material TEXT DEFAULT '',
+                purchased_at TEXT DEFAULT '',
+                price TEXT DEFAULT '',
                 created_at TEXT NOT NULL
             );
 
@@ -69,3 +74,6 @@ def init_db() -> None:
             conn.execute("ALTER TABLE items ADD COLUMN image_url TEXT")
         if "image_type" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN image_type TEXT DEFAULT 'photo'")
+        for col, default in (("season", ""), ("brand", ""), ("material", ""), ("purchased_at", ""), ("price", "")):
+            if col not in cols:
+                conn.execute(f"ALTER TABLE items ADD COLUMN {col} TEXT DEFAULT '{default}'")

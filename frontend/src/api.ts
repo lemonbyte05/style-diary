@@ -42,6 +42,11 @@ export interface ItemPayload {
   love_level: number;
   image_url?: string | null;
   image_type?: "cutout" | "photo";
+  season?: string;
+  brand?: string;
+  material?: string;
+  purchased_at?: string;
+  price?: string;
 }
 
 export const api = {

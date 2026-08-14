@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { api } from "@/api";
 import type { Item } from "@/types";
-import { formatInkDate } from "@/utils";
+import { formatDiaryDate, formatInkDate } from "@/utils";
 import { haptic } from "@/haptics";
 import { FolioText } from "@/components/ui/FolioText";
 import { ClothingImage } from "@/components/ui/ClothingImage";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
+
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +24,6 @@ export default function ItemDetailPage() {
 
   if (!item) return <DetailSkeleton />;
 
-  const fullName = `${item.created_at.split("-").slice(0, 2).join("年")}月`;
   const inkDate = formatInkDate(item.created_at);
 
   return (
@@ -39,15 +40,15 @@ export default function ItemDetailPage() {
         >
           <ArrowLeft size={14} strokeWidth={1.2} /> 收藏册
         </button>
-        <FolioText>NO.{String(item.id).padStart(2, "0")}</FolioText>
+        <FolioText>GARMENT NO.{pad(item.id)}</FolioText>
       </motion.header>
 
-      {/* 服装版画：主角，无框悬浮 */}
+      {/* 服装图：主角，无框悬浮 */}
       <motion.div
         initial={{ opacity: 0, scale: 0.985 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: EASE }}
-        className="relative mx-auto mt-4 w-[82%]"
+        className="relative mx-auto mt-4 w-[84%]"
       >
         <div className="relative -rotate-1">
           <div className="washi-tape" aria-hidden />
@@ -56,19 +57,13 @@ export default function ItemDetailPage() {
           </div>
         </div>
         {/* 手写编号 */}
-        <span className="absolute -left-6 top-6 font-hand text-2xl text-ink-faint/70">
-          {String(item.id).padStart(2, "0")}
-        </span>
+        <span className="absolute -left-6 top-6 font-hand text-2xl text-ink-faint/70">{pad(item.id)}</span>
         {/* 竖排卷标 */}
         <span
           className="absolute -right-5 top-0 text-folio tracking-[0.3em] text-ink/30"
           style={{ writingMode: "vertical-rl" }}
         >
           ARCHIVE · {inkDate.year}
-        </span>
-        {/* 日期印章 */}
-        <span className="absolute bottom-16 -right-6 -rotate-6 text-folio text-rose-deep/80">
-          {inkDate.month}入册
         </span>
       </motion.div>
 
@@ -80,51 +75,43 @@ export default function ItemDetailPage() {
         className="relative mt-10"
       >
         <h1 className="font-serif text-title leading-tight text-ink">{item.name}</h1>
-        <div className="mt-2 flex items-baseline justify-between">
-          <FolioText>
-            VOL.{String(item.id).padStart(2, "0")} · {fullName}入册
-          </FolioText>
-          <div className="flex gap-1 text-[11px]">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 + i * 0.05 }}
-                className={i < item.love_level ? "text-rose" : "text-edge"}
-              >
-                ★
-              </motion.span>
-            ))}
-          </div>
+        <FolioText className="mt-1.5">GARMENT NO.{pad(item.id)}</FolioText>
+
+        {/* 档案信息：只显示有值的字段 */}
+        <div className="mt-6 border-t border-edge/60">
+          <InfoRow label="CATEGORY">
+            <span className="text-caption font-serif text-ink-soft">{item.category}</span>
+          </InfoRow>
+          <InfoRow label="COLOR">
+            <span className="flex items-center gap-2 text-caption text-ink-soft">
+              <span
+                className="h-3.5 w-3.5 rounded-full"
+                style={{ background: item.color_hex, outline: "1px solid rgb(var(--c-edge))" }}
+              />
+              {item.color_hex}
+            </span>
+          </InfoRow>
+          {item.season && <InfoRow label="SEASON" value={item.season} />}
+          {item.brand && <InfoRow label="BRAND" value={item.brand} />}
+          {item.material && <InfoRow label="MATERIAL" value={item.material} />}
+          {item.purchased_at && <InfoRow label="PURCHASED" value={item.purchased_at} />}
+          {item.price && <InfoRow label="PRICE" value={`¥ ${item.price}`} />}
+          <InfoRow label="ADDED" value={formatDiaryDate(item.created_at)} />
         </div>
 
-        {/* 标签：细线文字 */}
-        <p className="mt-5 text-caption leading-relaxed text-ink-soft">
-          {item.tags.join(" · ")}
-        </p>
-
-        <div className="my-7 flex items-center gap-3">
-          <FolioText>它的故事</FolioText>
-          <span className="h-px flex-1 bg-edge/70" />
-        </div>
-
-        <p className="drop-cap max-w-[92%] text-body leading-relaxed text-ink-soft">
-          {item.story}
-        </p>
-        <p className="mt-3 text-right font-hand text-caption text-rose-deep/70">
-          —— 今天又想起穿它的那天
-        </p>
-
-        <div className="mt-8 flex flex-wrap items-baseline gap-x-3 border-t border-edge/60 pt-4">
-          <FolioText>穿过 {item.worn_count ?? 0} 次</FolioText>
-          <span className="text-edge">·</span>
-          <FolioText>出现在 {item.look_count ?? 0} 套搭配</FolioText>
-        </div>
+        {item.story && (
+          <>
+            <div className="my-7 flex items-center gap-3">
+              <FolioText>它的故事</FolioText>
+              <span className="h-px flex-1 bg-edge/70" />
+            </div>
+            <p className="drop-cap max-w-[92%] text-body leading-relaxed text-ink-soft">{item.story}</p>
+          </>
+        )}
       </motion.div>
 
-      {/* 操作：编辑式按钮 */}
-      <div className="mt-8 flex items-center gap-4">
+      {/* 轻量操作 */}
+      <div className="mt-9 flex items-center gap-4">
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => {
@@ -140,9 +127,18 @@ export default function ItemDetailPage() {
           onClick={() => navigate(`/edit/${item.id}`)}
           className="text-folio tracking-[0.22em] text-ink-faint transition-colors hover:text-ink"
         >
-          编辑
+          编辑 · EDIT
         </button>
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between border-b border-edge/40 py-3 last:border-0">
+      <FolioText>{label}</FolioText>
+      {children ?? <span className="text-caption font-serif text-ink-soft">{value}</span>}
     </div>
   );
 }
@@ -151,10 +147,9 @@ function DetailSkeleton() {
   return (
     <div className="mx-auto max-w-md px-7 pb-40 pt-6">
       <div className="mb-5 h-4 w-20 animate-pulse bg-edge/60" />
-      <div className="mx-auto mt-4 aspect-[4/5] w-[82%] animate-pulse bg-paper-deep" />
+      <div className="mx-auto mt-4 aspect-[4/5] w-[84%] animate-pulse bg-paper-deep" />
       <div className="mt-10 h-8 w-2/3 animate-pulse bg-edge/60" />
-      <div className="mt-6 h-5 w-1/2 animate-pulse bg-edge/50" />
-      <div className="mt-10 h-4 w-full animate-pulse bg-edge/50" />
+      <div className="mt-6 h-4 w-full animate-pulse bg-edge/50" />
     </div>
   );
 }

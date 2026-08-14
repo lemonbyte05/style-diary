@@ -177,6 +177,11 @@ class ItemCreate(BaseModel):
     love_level: int = 3
     image_url: Optional[str] = None
     image_type: Optional[str] = None
+    season: str = ""
+    brand: str = ""
+    material: str = ""
+    purchased_at: str = ""
+    price: str = ""
 
 
 @app.post("/api/items")
@@ -184,11 +189,11 @@ def items_create(body: ItemCreate) -> dict:
     with get_connection() as conn:
         cur = conn.execute(
             """
-            INSERT INTO items (name, emoji, category, color_hex, tags, story, love_level, image_url, image_type, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO items (name, emoji, category, color_hex, tags, story, love_level, image_url, image_type, season, brand, material, purchased_at, price, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                body.name.strip(),
+                body.name.strip() or "未命名单品",
                 body.emoji or "👗",
                 body.category,
                 body.color_hex,
@@ -197,6 +202,11 @@ def items_create(body: ItemCreate) -> dict:
                 max(1, min(5, body.love_level)),
                 body.image_url,
                 body.image_type or "photo",
+                body.season,
+                body.brand,
+                body.material,
+                body.purchased_at,
+                body.price,
                 date.today().isoformat(),
             ),
         )
@@ -261,11 +271,11 @@ def items_update(item_id: int, body: ItemCreate) -> dict:
         conn.execute(
             """
             UPDATE items
-            SET name=?, emoji=?, category=?, color_hex=?, tags=?, story=?, love_level=?, image_url=?, image_type=?
+            SET name=?, emoji=?, category=?, color_hex=?, tags=?, story=?, love_level=?, image_url=?, image_type=?, season=?, brand=?, material=?, purchased_at=?, price=?
             WHERE id=?
             """,
             (
-                body.name.strip(),
+                body.name.strip() or "未命名单品",
                 body.emoji or "👗",
                 body.category,
                 body.color_hex,
@@ -274,6 +284,11 @@ def items_update(item_id: int, body: ItemCreate) -> dict:
                 max(1, min(5, body.love_level)),
                 body.image_url,
                 body.image_type or "photo",
+                body.season,
+                body.brand,
+                body.material,
+                body.purchased_at,
+                body.price,
                 item_id,
             ),
         )

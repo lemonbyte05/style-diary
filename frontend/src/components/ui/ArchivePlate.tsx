@@ -5,12 +5,12 @@ import { ClothingImage } from "@/components/ui/ClothingImage";
 import { haptic } from "@/haptics";
 
 /**
- * 档案收藏件：四种变体在同一面墙上混合使用，避免"每件都是同一种卡片"
+ * 档案收藏件：以衣服图片为绝对主角，装饰尽量轻。
  *
- * - polaroid  相纸感：纸边 + 编号 + 胶带（默认，原行为）
- * - archive   索引卡：纸边 + 编号 + 入册日期
- * - editorial 编辑稿：几乎无框，只展示衣服 + 名字
- * - minimal   留白浮像：透明 PNG 悬浮 + 投影，无纸框
+ * - polaroid  相纸感：轻纸边 + 小型编号（默认）
+ * - archive   同 polaroid（简化后合并）
+ * - editorial 无纸框，纯图片 + 名字
+ * - minimal   留白浮像：contain 悬浮 + 投影，无纸框
  */
 export type PlateVariant = "polaroid" | "archive" | "editorial" | "minimal";
 
@@ -20,10 +20,6 @@ const ASPECT: Record<PlateVariant, (tall: boolean) => string> = {
   editorial: (t) => (t ? "aspect-[4/5]" : "aspect-square"),
   minimal: () => "aspect-[3/4]",
 };
-
-function shortDate(iso: string): string {
-  return (iso ?? "").slice(5).replace("-", ".");
-}
 
 export function ArchivePlate({
   item,
@@ -51,7 +47,7 @@ export function ArchivePlate({
   onSelect?: (id: number) => void;
 }) {
   const aspect = ASPECT[variant](tall);
-  const showTape = tape && !selectable && (variant === "polaroid" || variant === "archive");
+  const showTape = tape && !selectable && variant === "polaroid";
   const label = String(index + 1).padStart(2, "0");
 
   return (
@@ -81,20 +77,12 @@ export function ArchivePlate({
         }}
       >
         {variant === "polaroid" && (
-          <div className={`relative bg-paper-soft p-2 pb-2.5 ${aspect}`}>
-            <span
-              className="pointer-events-none absolute inset-x-0 top-0 h-5"
-              style={{
-                background: "linear-gradient(to bottom, rgba(255,255,255,0.45), transparent)",
-                borderTopLeftRadius: 2,
-                borderTopRightRadius: 2,
-              }}
-            />
-            <div className="h-[calc(100%-2rem)] w-full">
+          <div className={`relative bg-paper-soft p-1.5 pb-2 ${aspect}`}>
+            <div className="h-[calc(100%-1.75rem)] w-full">
               <ClothingImage item={item} className="h-full w-full" />
             </div>
-            <div className="mt-1.5 flex items-baseline justify-between">
-              <span className="max-w-[70%] truncate text-left font-serif text-[13px] leading-tight text-ink">
+            <div className="mt-1 flex items-baseline justify-between gap-2">
+              <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
                 {item.name}
               </span>
               <FolioText>{label}</FolioText>
@@ -103,26 +91,15 @@ export function ArchivePlate({
         )}
 
         {variant === "archive" && (
-          <div className={`relative bg-paper-soft p-2 pb-2.5 ${aspect}`}>
-            <span
-              className="pointer-events-none absolute inset-x-0 top-0 h-5"
-              style={{
-                background: "linear-gradient(to bottom, rgba(255,255,255,0.45), transparent)",
-                borderTopLeftRadius: 2,
-                borderTopRightRadius: 2,
-              }}
-            />
-            <div className="h-[calc(100%-3rem)] w-full">
+          <div className={`relative bg-paper-soft p-1.5 pb-2 ${aspect}`}>
+            <div className="h-[calc(100%-1.75rem)] w-full">
               <ClothingImage item={item} className="h-full w-full" />
             </div>
-            <div className="mt-1.5">
-              <span className="block max-w-full truncate text-left font-serif text-[13px] leading-tight text-ink">
+            <div className="mt-1 flex items-baseline justify-between gap-2">
+              <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
                 {item.name}
               </span>
-              <div className="mt-1 flex items-baseline justify-between border-t border-edge/70 pt-1">
-                <FolioText>ARCHIVE</FolioText>
-                <span className="font-hand text-[11px] text-ink-faint">{shortDate(item.created_at)}</span>
-              </div>
+              <FolioText>{label}</FolioText>
             </div>
           </div>
         )}
@@ -130,12 +107,7 @@ export function ArchivePlate({
         {variant === "editorial" && (
           <div className={aspect}>
             <ClothingImage item={item} className="h-full w-full" />
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="max-w-[80%] truncate text-left font-serif text-[13px] text-ink">
-                {item.name}
-              </span>
-              <span className="font-hand text-[10px] text-ink-faint">N.{label}</span>
-            </div>
+            <p className="mt-1.5 truncate font-serif text-[13px] text-ink">{item.name}</p>
           </div>
         )}
 

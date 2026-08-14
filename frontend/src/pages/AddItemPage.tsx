@@ -28,16 +28,16 @@ export default function AddItemPage() {
         <FolioText>VOL.NEW</FolioText>
       </motion.header>
 
-      <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">入册</h1>
-      <p className="mt-2 font-serif text-caption text-ink-soft">把一件新衣服，收进你的收藏册</p>
+      <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">ADD TO ARCHIVE</h1>
+      <p className="mt-2 font-serif text-caption text-ink-soft">拍下或选择一件衣服，收进你的衣柜</p>
 
       <div className="editorial-rule mt-6 w-full" />
 
       <ItemForm
-        submitLabel="SAVE TO ARCHIVE"
+        submitLabel="SAVE TO ARCHIVE · 收入衣橱"
         onSubmit={async (payload) => {
           const { item } = await api.itemCreate(payload);
-          navigate(`/item/${item.id}`);
+          navigate("/wardrobe", { state: { highlightId: item.id } });
         }}
       />
     </div>

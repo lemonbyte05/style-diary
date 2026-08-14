@@ -146,5 +146,10 @@ def serialize_item(row: Any) -> dict:
         "love_level": row["love_level"],
         "image_url": row["image_url"],
         "image_type": row["image_type"],
+        "season": row["season"],
+        "brand": row["brand"],
+        "material": row["material"],
+        "purchased_at": row["purchased_at"],
+        "price": row["price"],
         "created_at": row["created_at"],
     }

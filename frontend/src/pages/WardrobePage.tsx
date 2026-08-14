@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Search, Plus } from "lucide-react";
 import { api } from "@/api";
-import type { Collection, Item } from "@/types";
+import { CATEGORIES, type Collection, type Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
 import { ArchivePlate, type PlateVariant } from "@/components/ui/ArchivePlate";
+import { ClothingImage } from "@/components/ui/ClothingImage";
 import { haptic } from "@/haptics";
-
-const CATEGORIES = ["全部", "上衣", "裙装", "外套", "配饰"];
 
 export default function WardrobePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [category, setCategory] = useState("全部");
+  const [mode, setMode] = useState<"archive" | "index">("archive");
   const [collections, setCollections] = useState<Collection[]>([]);
   const [collectionId, setCollectionId] = useState<number | null>(null);
   const [creatingCol, setCreatingCol] = useState(false);
@@ -22,7 +22,23 @@ export default function WardrobePage() {
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showColMenu, setShowColMenu] = useState(false);
+  const [flashId, setFlashId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const highlightId = (location.state as { highlightId?: number } | null)?.highlightId;
+
+  useEffect(() => {
+    if (!highlightId) return;
+    setFlashId(highlightId);
+    const raf = requestAnimationFrame(() => {
+      document.getElementById(`plate-${highlightId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    const t = setTimeout(() => setFlashId(null), 3000);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
+  }, [highlightId]);
 
   const loadCollections = () => {
     api.collections().then((r) => setCollections(r.collections));
@@ -104,9 +120,26 @@ export default function WardrobePage() {
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">WARDROBE</h1>
         <p className="mt-2 font-serif text-caption text-ink-soft">我的衣橱</p>
-        <p className="mt-4 text-folio text-ink-faint">
-          {items.length} PIECES / AUGUST ARCHIVE
-        </p>
+        <div className="mt-4 flex items-center gap-4">
+          <button
+            onClick={() => setMode("archive")}
+            className={`text-folio tracking-[0.12em] transition-colors ${
+              mode === "archive" ? "border-b border-ink text-ink" : "text-ink-faint hover:text-ink-soft"
+            }`}
+          >
+            ARCHIVE
+          </button>
+          <button
+            onClick={() => setMode("index")}
+            className={`text-folio tracking-[0.12em] transition-colors ${
+              mode === "index" ? "border-b border-ink text-ink" : "text-ink-faint hover:text-ink-soft"
+            }`}
+          >
+            INDEX
+          </button>
+          <span className="h-px flex-1 bg-edge/60" />
+          <FolioText>{items.length} PIECES</FolioText>
+        </div>
       </motion.header>
 
       {/* 搜索 */}
@@ -127,7 +160,7 @@ export default function WardrobePage() {
 
       {/* 品类 */}
       <div className="mt-5 flex flex-wrap items-center">
-        {CATEGORIES.map((c, i) => (
+        {["全部", ...CATEGORIES].map((c, i) => (
           <button key={c} onClick={() => setCategory(c)} className="flex items-center">
             {i > 0 && <span className="mx-2 text-edge">·</span>}
             <span
@@ -201,17 +234,68 @@ export default function WardrobePage() {
 
       <div className="editorial-rule mt-7 w-full" />
 
-      {filtered.length === 0 ? (
+      {items.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex flex-col items-center py-28 text-center"
+        >
+          <span className="font-serif text-4xl text-ink-faint/40">—</span>
+          <h2 className="mt-6 font-serif text-h2 tracking-[0.08em] text-ink">YOUR ARCHIVE IS EMPTY</h2>
+          <p className="mt-3 font-hand text-lg text-ink-soft">从第一件衣服开始。</p>
+          <button
+            onClick={() => navigate("/add")}
+            className="mt-8 flex items-center gap-2 border-b border-ink pb-1 text-folio tracking-[0.2em] text-ink transition-colors hover:text-rose-deep"
+          >
+            ＋ ADD YOUR FIRST PIECE
+          </button>
+        </motion.div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-24 text-center">
           <span className="font-serif text-3xl text-ink-faint/40">—</span>
-          <p className="mt-4 font-hand text-lg text-ink-soft">这里还没有收藏。</p>
-          <FolioText className="mt-2">{collectionId ? "从衣橱里勾选几件加入" : "OR START A NEW COLLECTION"}</FolioText>
+          <p className="mt-4 font-hand text-lg text-ink-soft">没有匹配的单品。</p>
+          <FolioText className="mt-2">{collectionId ? "换个收藏夹试试" : "换个分类或关键词"}</FolioText>
         </div>
       ) : (
         <>
-          <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
-            {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect)}
-          </div>
+          {mode === "index" ? (
+            <div className="mt-6 grid grid-cols-2 gap-x-5 gap-y-7">
+              {filtered.map((item) => {
+                const on = selectedIds.includes(item.id);
+                const flash = flashId === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    id={`plate-${item.id}`}
+                    onClick={() => (selecting ? toggleSelect(item.id) : navigate(`/item/${item.id}`))}
+                    className="group flex flex-col"
+                    style={{
+                      outline: selecting && on ? "1px solid rgb(var(--c-rose-deep))" : undefined,
+                      boxShadow: flash ? "0 0 0 3px rgb(var(--c-rose))" : undefined,
+                    }}
+                  >
+                    <div
+                      className="w-full overflow-hidden bg-paper-soft transition-all"
+                      style={{
+                        borderRadius: 3,
+                        aspectRatio: "3/4",
+                        opacity: selecting && !on ? 0.72 : 1,
+                        boxShadow: "var(--sh-plate)",
+                      }}
+                    >
+                      <ClothingImage item={item} className="h-full w-full" />
+                    </div>
+                    <p className="mt-1.5 truncate text-center font-serif text-[13px] text-ink">{item.name}</p>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
+              {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect, flashId)}
+            </div>
+          )}
           <motion.button
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -280,7 +364,8 @@ function renderWall(
   onOpen: (id: number) => void,
   selecting: boolean,
   selectedIds: number[],
-  toggleSelect: (id: number) => void
+  toggleSelect: (id: number) => void,
+  flashId?: number | null
 ) {
   const nodes: React.ReactNode[] = [];
   for (let i = 0; i < items.length; i++) {
@@ -295,7 +380,12 @@ function renderWall(
           </div>
           <div className="mt-3 flex gap-4">
             {band.map((item, j) => (
-              <div key={item.id} className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}>
+              <div
+                key={item.id}
+                id={`plate-${item.id}`}
+                className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}
+                style={{ boxShadow: flashId === item.id ? "0 0 0 3px rgb(var(--c-rose))" : undefined }}
+              >
                 <ArchivePlate
                   item={item}
                   index={item.id}
@@ -320,7 +410,12 @@ function renderWall(
     const variant: PlateVariant =
       mod === 2 ? "editorial" : mod === 3 ? "minimal" : "polaroid";
     nodes.push(
-      <div key={item.id} className={mod === 2 ? "mt-10" : ""}>
+      <div
+        key={item.id}
+        id={`plate-${item.id}`}
+        className={mod === 2 ? "mt-10" : ""}
+        style={{ boxShadow: flashId === item.id ? "0 0 0 3px rgb(var(--c-rose))" : undefined }}
+      >
         <ArchivePlate
           item={item}
           index={i}
