@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+import struct
 import uuid
 from datetime import date
 from pathlib import Path
@@ -13,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from database import get_connection
-from seed import seed, serialize_item
+from seed import seed, serialize_item, MOODS
 
 GARMENTS_DIR = Path(__file__).parent / "static" / "garments"
 GARMENTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -29,6 +30,61 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def _detect_image_type(data: bytes, ext: str) -> str:
+    """自动判断图片类型：带透明通道的 PNG → cutout，其余 → photo"""
+    if ext == ".png" and data.startswith(PNG_SIGNATURE) and len(data) >= 33:
+        try:
+            # IHDR 数据：width(4) height(4) bit_depth(1) color_type(1) ...
+            _, _, _, color_type, _, _, _ = struct.unpack(">IIBBBBB", data[16:29])
+        except struct.error:
+            color_type = None
+        if color_type in (4, 6):
+            return "cutout"
+        if color_type == 3:
+            # 索引色 PNG 可能有 tRNS chunk（透明色）
+            pos = 8
+            while pos + 12 <= len(data):
+                length = int.from_bytes(data[pos : pos + 4], "big")
+                chunk_type = data[pos + 4 : pos + 8]
+                if chunk_type == b"tRNS":
+                    return "cutout"
+                if chunk_type == b"IEND":
+                    break
+                pos += 12 + length
+        return "photo"
+    return "photo"
+
+TODAY_CAPTIONS = [
+    "奶油色的慵懒午后，温柔又有余韵。",
+    "像是被阳光晒过的故事，刚刚好。",
+    "把喜欢的两样东西放在一起，总是不会错。",
+    "这一套，适合慢慢散步的傍晚。",
+    "穿成自己喜欢的样子，就是最好的天气。",
+]
+
+
+def _today_edit(conn) -> Optional[dict]:
+    """Today's Edit：按日期种子稳定挑选主单品+配饰，每天换一套"""
+    rows = conn.execute("SELECT * FROM items").fetchall()
+    if not rows:
+        return None
+    items = [serialize_item(r) for r in rows]
+    rng = random.Random(date.today().toordinal())
+    main_pool = [i for i in items if i["category"] in ("上衣", "裙装", "外套")] or items
+    main = rng.choice(main_pool)
+    acc_pool = [i for i in items if i["category"] == "配饰"]
+    accessory = rng.choice(acc_pool) if acc_pool else None
+    return {
+        "main": main,
+        "accessory": accessory,
+        "mood": rng.choice(MOODS),
+        "caption": rng.choice(TODAY_CAPTIONS),
+        "date": date.today().isoformat(),
+    }
 
 
 def _load_items(conn, ids: list[int]) -> list[dict]:
@@ -52,6 +108,22 @@ def _load_look(conn, row) -> dict:
     }
 
 
+def _load_wear(conn, row) -> dict:
+    return {
+        "id": row["id"],
+        "date": row["date"],
+        "weather": row["weather"],
+        "note": row["note"],
+        "created_at": row["created_at"],
+        "items": _load_items(conn, json.loads(row["item_ids"])),
+    }
+
+
+def _item_usage_count(conn, item_id: int, table: str) -> int:
+    rows = conn.execute(f"SELECT item_ids FROM {table}").fetchall()
+    return sum(1 for r in rows if item_id in json.loads(r["item_ids"]))
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     seed()
@@ -72,6 +144,7 @@ def home() -> dict:
             },
             "total_items": len(items),
             "recent_collections": items[:6],
+            "today_edit": _today_edit(conn),
         }
 
 
@@ -103,6 +176,7 @@ class ItemCreate(BaseModel):
     story: str = ""
     love_level: int = 3
     image_url: Optional[str] = None
+    image_type: Optional[str] = None
 
 
 @app.post("/api/items")
@@ -110,8 +184,8 @@ def items_create(body: ItemCreate) -> dict:
     with get_connection() as conn:
         cur = conn.execute(
             """
-            INSERT INTO items (name, emoji, category, color_hex, tags, story, love_level, image_url, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO items (name, emoji, category, color_hex, tags, story, love_level, image_url, image_type, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 body.name.strip(),
@@ -122,6 +196,7 @@ def items_create(body: ItemCreate) -> dict:
                 body.story,
                 max(1, min(5, body.love_level)),
                 body.image_url,
+                body.image_type or "photo",
                 date.today().isoformat(),
             ),
         )
@@ -144,7 +219,8 @@ async def items_upload(file: UploadFile = File(...)) -> dict:
     name = f"{uuid.uuid4().hex}{ext}"
     dest = GARMENTS_DIR / name
     dest.write_bytes(data)
-    return {"url": f"/static/garments/{name}"}
+    image_type = _detect_image_type(data, ext)
+    return {"url": f"/static/garments/{name}", "image_type": image_type}
 
 
 def _remove_image_file(url: Optional[str]) -> None:
@@ -165,11 +241,8 @@ def item_detail(item_id: int) -> dict:
         if not row:
             raise HTTPException(status_code=404, detail="not_found")
         item = serialize_item(row)
-        used = 0
-        for o in conn.execute("SELECT item_ids FROM looks").fetchall():
-            if item_id in json.loads(o["item_ids"]):
-                used += 1
-        item["worn_count"] = used
+        item["worn_count"] = _item_usage_count(conn, item_id, "wears")
+        item["look_count"] = _item_usage_count(conn, item_id, "looks")
         item["collections"] = [
             x["collection_id"]
             for x in conn.execute(
@@ -182,12 +255,13 @@ def item_detail(item_id: int) -> dict:
 @app.put("/api/items/{item_id}")
 def items_update(item_id: int, body: ItemCreate) -> dict:
     with get_connection() as conn:
-        if not conn.execute("SELECT 1 FROM items WHERE id = ?", (item_id,)).fetchone():
+        old = conn.execute("SELECT image_url FROM items WHERE id = ?", (item_id,)).fetchone()
+        if not old:
             raise HTTPException(status_code=404, detail="not_found")
         conn.execute(
             """
             UPDATE items
-            SET name=?, emoji=?, category=?, color_hex=?, tags=?, story=?, love_level=?, image_url=?
+            SET name=?, emoji=?, category=?, color_hex=?, tags=?, story=?, love_level=?, image_url=?, image_type=?
             WHERE id=?
             """,
             (
@@ -199,11 +273,14 @@ def items_update(item_id: int, body: ItemCreate) -> dict:
                 body.story,
                 max(1, min(5, body.love_level)),
                 body.image_url,
+                body.image_type or "photo",
                 item_id,
             ),
         )
         row = conn.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
-        return {"item": serialize_item(row)}
+    if old["image_url"] and old["image_url"] != body.image_url:
+        _remove_image_file(old["image_url"])
+    return {"item": serialize_item(row)}
 
 
 @app.delete("/api/items/{item_id}")
@@ -211,14 +288,15 @@ def items_delete(item_id: int) -> dict:
     with get_connection() as conn:
         row = conn.execute("SELECT image_url FROM items WHERE id = ?", (item_id,)).fetchone()
         conn.execute("DELETE FROM collection_items WHERE item_id = ?", (item_id,))
-        for o in conn.execute("SELECT id, item_ids FROM looks").fetchall():
-            ids = json.loads(o["item_ids"])
-            if item_id in ids:
-                ids.remove(item_id)
-                conn.execute(
-                    "UPDATE looks SET item_ids = ? WHERE id = ?",
-                    (json.dumps(ids), o["id"]),
-                )
+        for table in ("looks", "wears"):
+            for o in conn.execute(f"SELECT id, item_ids FROM {table}").fetchall():
+                ids = json.loads(o["item_ids"])
+                if item_id in ids:
+                    ids.remove(item_id)
+                    conn.execute(
+                        f"UPDATE {table} SET item_ids = ? WHERE id = ?",
+                        (json.dumps(ids), o["id"]),
+                    )
         conn.execute("DELETE FROM items WHERE id = ?", (item_id,))
     _remove_image_file(row["image_url"] if row else None)
     return {"ok": True}
@@ -349,6 +427,44 @@ def looks_create(body: LookCreate) -> dict:
 def looks_delete(look_id: int) -> dict:
     with get_connection() as conn:
         conn.execute("DELETE FROM looks WHERE id = ?", (look_id,))
+        return {"ok": True}
+
+
+@app.get("/api/wears")
+def wears_list() -> dict:
+    with get_connection() as conn:
+        rows = conn.execute("SELECT * FROM wears ORDER BY date DESC, id DESC").fetchall()
+        return {"wears": [_load_wear(conn, r) for r in rows]}
+
+
+class WearCreate(BaseModel):
+    date: Optional[str] = None
+    item_ids: list[int] = []
+    weather: str = ""
+    note: str = ""
+
+
+@app.post("/api/wears")
+def wears_create(body: WearCreate) -> dict:
+    if not body.item_ids:
+        raise HTTPException(status_code=400, detail="穿搭记录至少需要一件单品")
+    day = body.date or date.today().isoformat()
+    with get_connection() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO wears (date, item_ids, weather, note, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (day, json.dumps(body.item_ids), body.weather, body.note, date.today().isoformat()),
+        )
+        row = conn.execute("SELECT * FROM wears WHERE id = ?", (cur.lastrowid,)).fetchone()
+        return {"wear": _load_wear(conn, row)}
+
+
+@app.delete("/api/wears/{wear_id}")
+def wears_delete(wear_id: int) -> dict:
+    with get_connection() as conn:
+        conn.execute("DELETE FROM wears WHERE id = ?", (wear_id,))
         return {"ok": True}
 
 

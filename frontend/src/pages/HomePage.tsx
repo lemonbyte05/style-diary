@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api";
-import type { HomeData } from "@/types";
+import type { HomeData, TodayEdit } from "@/types";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
-import { ArchivePlate } from "@/components/ui/ArchivePlate";
+import { ArchivePlate, type PlateVariant } from "@/components/ui/ArchivePlate";
+import { ClothingImage } from "@/components/ui/ClothingImage";
 import { LeafSpray } from "@/components/ui/LeafSpray";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
+
+/** 首页档案墙的变体循环：同页混用不同版式 */
+const HOME_WALL: PlateVariant[] = ["polaroid", "editorial", "archive", "minimal", "polaroid", "editorial"];
 
 export default function HomePage() {
   const [data, setData] = useState<HomeData | null>(null);
@@ -21,11 +25,15 @@ export default function HomePage() {
 
   if (!data) return <HomeSkeleton />;
 
-  const { masthead, total_items, recent_collections } = data;
+  const { masthead, total_items, recent_collections, today_edit } = data;
 
   return (
     <div className="mx-auto max-w-md px-7 pb-40 pt-9">
       <Masthead vol={masthead.vol} total={total_items} />
+
+      {today_edit && (
+        <TodayEdit edit={today_edit} onOpen={(id) => navigate(`/item/${id}`)} />
+      )}
 
       {/* 搭配入口 */}
       <motion.section
@@ -100,6 +108,90 @@ function Masthead({ vol, total }: { vol: number; total: number }) {
   );
 }
 
+/* ---------- Today's Edit：开篇拼贴（主单品+配饰叠压+心情+文案） ---------- */
+function TodayEdit({
+  edit,
+  onOpen,
+}: {
+  edit: TodayEdit;
+  onOpen: (id: number) => void;
+}) {
+  const day = Number(edit.date.split("-")[2] ?? 0);
+  const monthDay = `${edit.date.slice(5, 7).replace(/^0/, "")}月${edit.date.slice(8).replace(/^0/, "")}日`;
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.7, ease: EASE }}
+      className="pt-9"
+    >
+      <div className="flex items-baseline justify-between">
+        <FolioText>✦ TODAY'S EDIT</FolioText>
+        <span className="font-hand text-sm text-ink-faint">{monthDay}</span>
+      </div>
+
+      <div className="relative mt-4" style={{ height: 320 }}>
+        {/* 版面底板 */}
+        <div
+          className="absolute inset-x-0 top-0 h-full rotate-[0.8deg] border border-edge/80 bg-paper-soft"
+          style={{ borderRadius: 3, boxShadow: "var(--sh-plate)" }}
+        />
+        {/* 巨型日期水印 */}
+        <span
+          className="pointer-events-none absolute -right-1 top-0 select-none font-serif leading-none text-ink/[0.07]"
+          style={{ fontSize: 150 }}
+        >
+          {day}
+        </span>
+
+        {/* 主单品 */}
+        <button
+          onClick={() => onOpen(edit.main.id)}
+          className="absolute"
+          style={{ left: "22%", top: "4%", width: 148, height: 192, rotate: "-2deg", zIndex: 2 }}
+        >
+          <div className="h-full w-full bg-paper-soft p-2 shadow-plate" style={{ borderRadius: 2 }}>
+            <ClothingImage item={edit.main} className="h-full w-full" />
+          </div>
+        </button>
+
+        {/* 配饰叠压右下 */}
+        {edit.accessory && (
+          <button
+            onClick={() => edit.accessory && onOpen(edit.accessory.id)}
+            className="absolute"
+            style={{ left: "74%", top: "60%", width: 86, height: 86, rotate: "6deg", zIndex: 3 }}
+          >
+            <div className="h-full w-full bg-paper-soft p-1.5 shadow-plate" style={{ borderRadius: 2 }}>
+              <ClothingImage item={edit.accessory} className="h-full w-full" />
+            </div>
+          </button>
+        )}
+
+        {/* 心情 + 一句文案 */}
+        <div className="absolute bottom-3 left-5 right-16 z-10">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="font-hand text-xl text-rose-deep">
+              {edit.mood.emoji} {edit.mood.word}
+            </span>
+            <span className="text-folio text-ink-faint">{edit.mood.note}</span>
+          </div>
+          <p className="mt-1.5 font-serif text-caption leading-relaxed text-ink-soft">
+            {edit.caption}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-baseline justify-between">
+        <FolioText>DAILY EDIT</FolioText>
+        <span className="font-hand text-xs text-ink-faint">每天换一套心情</span>
+      </div>
+    </motion.section>
+  );
+}
+
 /* ---------- 最近收藏：错落档案墙 ---------- */
 function RecentArchive({
   items,
@@ -151,6 +243,7 @@ function RecentArchive({
               <ArchivePlate
                 item={item}
                 index={i}
+                variant={HOME_WALL[i % HOME_WALL.length]}
                 rotate={i % 2 === 0 ? -1.6 : 1.3}
                 tall={i % 2 === 0}
                 tape={i === 0 || i === 4}

@@ -44,6 +44,19 @@ export function formatFolioDate(iso: string): string {
   return `${months[(m ?? 1) - 1]} ${String(d ?? 1).padStart(2, "0")}`;
 }
 
+/** 天气选项（穿搭记录） */
+export const WEATHERS = [
+  { key: "sun", label: "晴", icon: "☀" },
+  { key: "cloudy", label: "阴", icon: "☁" },
+  { key: "rain", label: "雨", icon: "🌧" },
+  { key: "snow", label: "雪", icon: "❄" },
+  { key: "wind", label: "风", icon: "🍃" },
+];
+
+export const WEATHER_ICON: Record<string, string> = Object.fromEntries(
+  WEATHERS.map((w) => [w.key, w.icon])
+);
+
 /** "2026-08" → { year: "2026", name: "AUGUST", short: "AUG" } */
 export function monthEn(ym: string): { year: string; name: string; short: string } {
   const [y, m] = ym.split("-").map(Number);

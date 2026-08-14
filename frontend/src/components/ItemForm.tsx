@@ -28,6 +28,7 @@ export function ItemForm({
   const [story, setStory] = useState(initial?.story ?? "");
   const [love, setLove] = useState(initial?.love_level ?? 3);
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url ?? null);
+  const [imageType, setImageType] = useState<"cutout" | "photo">(initial?.image_type ?? "photo");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -35,8 +36,9 @@ export function ItemForm({
     if (!file) return;
     setUploading(true);
     try {
-      const { url } = await api.itemUpload(file);
+      const { url, image_type } = await api.itemUpload(file);
       setImageUrl(url);
+      setImageType(image_type);
     } catch {
       /* 忽略上传失败 */
     } finally {
@@ -57,6 +59,7 @@ export function ItemForm({
         story: story.trim(),
         love_level: love,
         image_url: imageUrl,
+        image_type: imageType,
       });
     } catch {
       setSaving(false);
@@ -70,7 +73,7 @@ export function ItemForm({
         <div className="relative mx-auto w-[76%]">
           <div className="bg-paper-soft px-4 pb-4 pt-4 shadow-plate" style={{ borderRadius: 2 }}>
             <ClothingImage
-              item={{ name: name || "新收藏", category, color_hex: color, image_url: imageUrl }}
+              item={{ name: name || "新收藏", category, color_hex: color, image_url: imageUrl, image_type: imageType }}
               className="aspect-[3/4] w-full"
             />
           </div>

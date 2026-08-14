@@ -27,6 +27,7 @@ def init_db() -> None:
                 story TEXT DEFAULT '',
                 love_level INTEGER DEFAULT 3,
                 image_url TEXT,
+                image_type TEXT DEFAULT 'photo',
                 created_at TEXT NOT NULL
             );
 
@@ -49,11 +50,22 @@ def init_db() -> None:
                 item_id INTEGER NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS wears (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                item_ids TEXT NOT NULL DEFAULT '[]',
+                weather TEXT DEFAULT '',
+                note TEXT DEFAULT '',
+                created_at TEXT NOT NULL
+            );
+
             DROP TABLE IF EXISTS outfits;
             DROP TABLE IF EXISTS saved_looks;
             """
         )
-        # 迁移：老库补 image_url 列
+        # 迁移：老库补 image_url / image_type 列
         cols = [r["name"] for r in conn.execute("PRAGMA table_info(items)").fetchall()]
         if "image_url" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN image_url TEXT")
+        if "image_type" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN image_type TEXT DEFAULT 'photo'")

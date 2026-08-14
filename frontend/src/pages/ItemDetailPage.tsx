@@ -116,9 +116,10 @@ export default function ItemDetailPage() {
           —— 今天又想起穿它的那天
         </p>
 
-        <div className="mt-8 flex items-baseline justify-between border-t border-edge/60 pt-4">
-          <FolioText>出现在 {item.worn_count ?? 0} 套搭配里</FolioText>
-          <FolioText>REVIEW</FolioText>
+        <div className="mt-8 flex flex-wrap items-baseline gap-x-3 border-t border-edge/60 pt-4">
+          <FolioText>穿过 {item.worn_count ?? 0} 次</FolioText>
+          <span className="text-edge">·</span>
+          <FolioText>出现在 {item.look_count ?? 0} 套搭配</FolioText>
         </div>
       </motion.div>
 

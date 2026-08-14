@@ -14,18 +14,21 @@ const ASPECTS: Record<GarmentShape, string> = {
 /**
  * 服装图：Garment First 的核心组件
  *
- * - 优先渲染去背景透明 PNG（item.image_url / src）
- * - 真实图片默认 object-cover：填满整框、裁掉四周透明边距/留白，让衣服尽量大
- * - 图片加载失败自动回退到服装版画占位，未来替换真实图后布局无需修改
+ * - 优先渲染真实图片（item.image_url / src）
+ * - 展示方式按图类型自动判断（可被 fit 覆盖）：
+ *   - cutout 透明 PNG → object-contain（保留原比例、四周留白、悬浮投影，不裁切）
+ *   - photo  普通照片 → object-cover（填满整框，裁掉边缘留白）
+ *   - 缺省（未知）    → object-contain（真实衣服默认不裁切）
+ * - 图片加载失败自动回退到服装版画占位
  */
 export function ClothingImage({
   item,
   src,
   className = "",
   interactive = false,
-  fit = "cover",
+  fit,
 }: {
-  item: Pick<Item, "name" | "category" | "color_hex" | "image_url">;
+  item: Pick<Item, "name" | "category" | "color_hex" | "image_url" | "image_type">;
   src?: string | null;
   className?: string;
   interactive?: boolean;
@@ -36,6 +39,7 @@ export function ClothingImage({
   const hasCustomAspect = /aspect-\[/.test(className);
   const aspect = hasCustomAspect ? "" : ASPECTS[shape];
   const url = src ?? item.image_url;
+  const mode: "cover" | "contain" = fit ?? (item.image_type === "photo" ? "cover" : "contain");
 
   if (url && !broken) {
     return (
@@ -46,10 +50,10 @@ export function ClothingImage({
           loading="lazy"
           onError={() => setBroken(true)}
           className={`absolute inset-0 h-full w-full ${
-            fit === "cover" ? "object-cover" : "object-contain"
+            mode === "cover" ? "object-cover" : "object-contain"
           }`}
           style={
-            fit === "contain"
+            mode === "contain"
               ? { filter: "drop-shadow(0 14px 20px rgba(48, 40, 33, 0.16))" }
               : undefined
           }

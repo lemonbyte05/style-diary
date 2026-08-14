@@ -1,4 +1,4 @@
-import type { Collection, HomeData, Item, Look } from "@/types";
+import type { Collection, HomeData, Item, Look, Wear } from "@/types";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -41,6 +41,7 @@ export interface ItemPayload {
   story: string;
   love_level: number;
   image_url?: string | null;
+  image_type?: "cutout" | "photo";
 }
 
 export const api = {
@@ -67,11 +68,15 @@ export const api = {
     post<{ ok: boolean }>(`/api/collections/${cid}/items`, { item_id: itemId }),
   collectionRemoveItem: (cid: number, itemId: number) =>
     del<{ ok: boolean }>(`/api/collections/${cid}/items/${itemId}`),
+  wears: () => get<{ wears: Wear[] }>("/api/wears"),
+  wearCreate: (payload: { date?: string; item_ids: number[]; weather: string; note: string }) =>
+    post<{ wear: Wear }>("/api/wears", payload),
+  wearDelete: (id: number) => del<{ ok: boolean }>(`/api/wears/${id}`),
   itemUpload: async (file: File) => {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/items/upload", { method: "POST", body: fd });
     if (!res.ok) throw new Error("上传失败");
-    return res.json() as Promise<{ url: string }>;
+    return res.json() as Promise<{ url: string; image_type: "cutout" | "photo" }>;
   },
 };

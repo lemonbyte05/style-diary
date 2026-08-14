@@ -5,7 +5,7 @@ import { Search, Plus } from "lucide-react";
 import { api } from "@/api";
 import type { Collection, Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
-import { ArchivePlate } from "@/components/ui/ArchivePlate";
+import { ArchivePlate, type PlateVariant } from "@/components/ui/ArchivePlate";
 import { haptic } from "@/haptics";
 
 const CATEGORIES = ["全部", "上衣", "裙装", "外套", "配饰"];
@@ -299,6 +299,7 @@ function renderWall(
                 <ArchivePlate
                   item={item}
                   index={item.id}
+                  variant={j === 0 ? "editorial" : "archive"}
                   rotate={j === 0 ? -1.4 : 1.6}
                   tall={false}
                   onOpen={onOpen}
@@ -316,11 +317,14 @@ function renderWall(
     }
     const mod = i % 4;
     const item = items[i];
+    const variant: PlateVariant =
+      mod === 2 ? "editorial" : mod === 3 ? "minimal" : "polaroid";
     nodes.push(
       <div key={item.id} className={mod === 2 ? "mt-10" : ""}>
         <ArchivePlate
           item={item}
           index={i}
+          variant={variant}
           rotate={mod === 1 ? -1.6 : 1.2}
           tall={mod !== 2}
           tape={i === 1 || i === 5}

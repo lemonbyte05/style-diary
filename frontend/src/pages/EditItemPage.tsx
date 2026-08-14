@@ -95,6 +95,7 @@ export default function EditItemPage() {
           story: item.story,
           love_level: item.love_level,
           image_url: item.image_url ?? null,
+          image_type: item.image_type ?? "photo",
         }}
         submitLabel="SAVE CHANGES"
         onSubmit={async (payload) => {

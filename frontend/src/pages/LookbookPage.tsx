@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/api";
-import type { Look } from "@/types";
-import { monthEn } from "@/utils";
+import type { Look, Wear } from "@/types";
+import { monthEn, formatDiaryDate, WEATHER_ICON } from "@/utils";
 import { FolioText } from "@/components/ui/FolioText";
 import { LookEntry } from "@/components/ui/LookEntry";
+import { ClothingImage } from "@/components/ui/ClothingImage";
+import { haptic } from "@/haptics";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 export default function LookbookPage() {
   const [looks, setLooks] = useState<Look[]>([]);
+  const [wears, setWears] = useState<Wear[]>([]);
   const [managing, setManaging] = useState(false);
 
   const load = () => {
     api.looks().then((r) => setLooks(r.looks)).catch(() => setLooks([]));
+    api.wears().then((r) => setWears(r.wears)).catch(() => setWears([]));
   };
   useEffect(load, []);
 
@@ -21,6 +26,15 @@ export default function LookbookPage() {
     try {
       await api.lookDelete(id);
       setLooks((ls) => ls.filter((l) => l.id !== id));
+    } catch {
+      /* 保持原状 */
+    }
+  };
+
+  const removeWear = async (id: number) => {
+    try {
+      await api.wearDelete(id);
+      setWears((ws) => ws.filter((w) => w.id !== id));
     } catch {
       /* 保持原状 */
     }
@@ -83,6 +97,99 @@ export default function LookbookPage() {
           );
         })
       )}
+
+      {/* 穿搭日记 */}
+      <WearLog wears={wears} manage={managing} onDelete={removeWear} />
+    </div>
+  );
+}
+
+/* ---------- 穿搭日记：Wear Log 时间线 ---------- */
+function WearLog({
+  wears,
+  manage,
+  onDelete,
+}: {
+  wears: Wear[];
+  manage: boolean;
+  onDelete: (id: number) => void;
+}) {
+  const sorted = useMemo(
+    () => [...wears].sort((a, b) => b.date.localeCompare(a.date)),
+    [wears]
+  );
+
+  return (
+    <section className="pt-14">
+      <div className="flex items-baseline justify-between">
+        <FolioText>WEAR LOG · 穿搭日记</FolioText>
+        <span className="font-hand text-xs text-ink-faint">穿过 {sorted.length} 次</span>
+      </div>
+      <div className="editorial-rule mt-3 w-full" />
+
+      {sorted.length === 0 ? (
+        <p className="py-10 text-center font-hand text-caption text-ink-faint">
+          还没有记录。保存搭配时勾选「今天穿了这套」，就会记在这里。
+        </p>
+      ) : (
+        sorted.map((w) => (
+          <WearEntry key={w.id} wear={w} manage={manage} onDelete={() => onDelete(w.id)} />
+        ))
+      )}
+    </section>
+  );
+}
+
+function WearEntry({
+  wear,
+  manage,
+  onDelete,
+}: {
+  wear: Wear;
+  manage: boolean;
+  onDelete: () => void;
+}) {
+  const navigate = useNavigate();
+  const icon = WEATHER_ICON[wear.weather] ?? "✦";
+
+  return (
+    <div className="border-b border-edge/50 py-5 last:border-0">
+      <div className="flex items-baseline justify-between">
+        <FolioText>{formatDiaryDate(wear.date)}</FolioText>
+        {manage ? (
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 text-folio text-terra transition-colors hover:text-ink"
+          >
+            ✕ 删除
+          </button>
+        ) : (
+          <span className="font-hand text-sm text-ink-soft">{icon}</span>
+        )}
+      </div>
+      <div className="mt-3 flex items-center gap-4">
+        <div className="flex shrink-0 items-start">
+          {wear.items.slice(0, 3).map((item, i) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                haptic.tap();
+                navigate(`/item/${item.id}`);
+              }}
+              className={i === 0 ? "-rotate-2" : i === 1 ? "-ml-5 mt-2 rotate-1" : "-ml-4 mt-5 rotate-3"}
+            >
+              <div className="bg-paper-soft p-1 shadow-1" style={{ borderRadius: 2 }}>
+                <ClothingImage item={item} className="h-14 w-11" />
+              </div>
+            </button>
+          ))}
+        </div>
+        <div className="min-w-0">
+          <p className="font-hand text-caption leading-snug text-ink-soft">
+            {wear.note || "今天穿了这一套。"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

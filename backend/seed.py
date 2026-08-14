@@ -145,5 +145,6 @@ def serialize_item(row: Any) -> dict:
         "story": row["story"],
         "love_level": row["love_level"],
         "image_url": row["image_url"],
+        "image_type": row["image_type"],
         "created_at": row["created_at"],
     }
