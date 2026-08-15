@@ -16,6 +16,7 @@ export default function InspirationDetailPage() {
   const [insp, setInsp] = useState<Inspiration | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [savingTags, setSavingTags] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
@@ -95,34 +96,71 @@ export default function InspirationDetailPage() {
         />
       </motion.div>
 
-      {/* 标签（快速选择，可选） */}
+      {/* 标签：默认弱化，点开才展开选择器 */}
       <motion.section
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
         className="pt-7"
       >
-        <div className="flex items-baseline justify-between">
-          <FolioText>TAGS</FolioText>
-          <span className="font-hand text-xs text-ink-faint">{savingTags ? "保存中…" : "选 1～3 个"}</span>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center">
-          {INSPIRATION_TAGS.map((t, i) => {
-            const on = tags.includes(t);
-            return (
-              <button key={t} onClick={() => toggleTag(t)} className="flex items-center">
-                {i > 0 && <span className="mx-2 text-edge">·</span>}
-                <span
-                  className={`text-caption transition-colors ${
-                    on ? "border-b border-rose-deep text-rose-deep" : "text-ink-faint hover:text-ink-soft"
-                  }`}
-                >
-                  {t}
+        {tags.length > 0 && (
+          <div className="flex items-baseline justify-between">
+            <div className="flex flex-wrap gap-x-2">
+              {tags.map((t) => (
+                <span key={t} className="font-hand text-caption text-ink-soft">
+                  #{t}
                 </span>
-              </button>
-            );
-          })}
-        </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                haptic.tap();
+                setTagsOpen((v) => !v);
+              }}
+              className="text-folio text-ink-faint transition-colors hover:text-ink"
+            >
+              {tagsOpen ? "收起" : "编辑"}
+            </button>
+          </div>
+        )}
+
+        {!tagsOpen ? (
+          tags.length === 0 && (
+            <button
+              onClick={() => {
+                haptic.tap();
+                setTagsOpen(true);
+              }}
+              className="flex items-center gap-2 border-b border-ink-faint pb-0.5 text-folio tracking-[0.16em] text-ink-soft transition-colors hover:text-ink"
+            >
+              ＋ ADD TAGS
+            </button>
+          )
+        ) : (
+          <div>
+            <div className="flex items-baseline justify-between">
+              <FolioText>ADD TAGS</FolioText>
+              <span className="font-hand text-xs text-ink-faint">{savingTags ? "保存中…" : "选 1～3 个"}</span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center">
+              {INSPIRATION_TAGS.map((t, i) => {
+                const on = tags.includes(t);
+                return (
+                  <button key={t} onClick={() => toggleTag(t)} className="flex items-center">
+                    {i > 0 && <span className="mx-2 text-edge">·</span>}
+                    <span
+                      className={`text-caption transition-colors ${
+                        on ? "border-b border-rose-deep text-rose-deep" : "text-ink-faint hover:text-ink-soft"
+                      }`}
+                    >
+                      {t}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </motion.section>
 
       {/* 日期 */}

@@ -52,8 +52,26 @@ export function LookEntry({
           ))}
         </div>
         <div className="min-w-0">
-          <h3 className="font-serif text-h2 leading-tight text-ink">「{look.title}」</h3>
+          {/^LOOK\s+\d+$/i.test(look.title) ? (
+            <FolioText>{look.title}</FolioText>
+          ) : (
+            <h3 className="font-serif text-h2 leading-tight text-ink">「{look.title}」</h3>
+          )}
           {look.note && <p className="mt-1 truncate font-hand text-caption text-ink-soft">{look.note}</p>}
+          {look.inspiration_id && look.inspiration_image && (
+            <button
+              onClick={() => navigate(`/inspiration/${look.inspiration_id}`)}
+              className="mt-2 inline-flex items-center gap-1.5 text-folio text-ink-faint transition-colors hover:text-rose-deep"
+            >
+              <img
+                src={look.inspiration_image}
+                alt="inspired by"
+                className="h-6 w-5 border border-edge/50 object-cover"
+                style={{ borderRadius: 1 }}
+              />
+              INSPIRED BY
+            </button>
+          )}
         </div>
       </div>
     </div>

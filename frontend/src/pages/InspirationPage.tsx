@@ -5,11 +5,11 @@ import { Camera } from "lucide-react";
 import { api } from "@/api";
 import type { Inspiration } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
-import { LeafSpray } from "@/components/ui/LeafSpray";
 import { haptic } from "@/haptics";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
-const WALL_ROT = [-1.2, 1.1, -1.7, 1.4, -0.9, 1.6];
+/** 大部分 0°，仅少量轻微旋转，不循环规律 */
+const rotFor = (i: number) => (i % 5 === 2 ? -1.8 : i % 5 === 4 ? 1.4 : 0);
 
 export default function InspirationPage() {
   const [list, setList] = useState<Inspiration[]>([]);
@@ -37,31 +37,29 @@ export default function InspirationPage() {
     }
   };
 
+  const [featured, ...rest] = list;
+
   return (
     <div className="mx-auto max-w-md px-7 pb-44 pt-9">
-      <LeafSpray className="pointer-events-none absolute right-2 top-2 h-10 w-20 text-ink-faint/30" />
-
       <motion.header
         initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: EASE }}
       >
         <div className="flex items-baseline justify-between">
-          <FolioText>✦ MOODBOARD</FolioText>
+          <FolioText>MOODBOARD</FolioText>
           <FolioText>{list.length} SAVED</FolioText>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">INSPIRATION</h1>
         <p className="mt-2 font-serif text-caption text-ink-soft">我的灵感集</p>
       </motion.header>
 
-      <div className="editorial-rule mt-6 w-full" />
-
-      {/* 保存灵感（上传即存） */}
-      <motion.section
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
-        className="pt-6"
+      {/* 轻量保存入口 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.15, ease: EASE }}
+        className="pt-7"
       >
         <input
           ref={fileRef}
@@ -73,51 +71,53 @@ export default function InspirationPage() {
         />
         <button
           onClick={() => fileRef.current?.click()}
-          className="flex w-full flex-col items-center gap-2 border-2 border-dashed border-edge/80 bg-paper-soft/40 py-7 transition-colors hover:border-rose"
-          style={{ borderRadius: 4 }}
+          className="group flex w-full items-baseline gap-3"
         >
-          <Camera size={24} strokeWidth={1.1} className="text-ink-faint" />
-          <span className="font-serif text-h2 text-ink">{uploading ? "保存中…" : "＋ ADD INSPIRATION"}</span>
-          <span className="font-hand text-caption text-ink-faint">看到喜欢的穿搭，先存起来，以后整理</span>
+          <span className="flex items-center gap-2 border-b border-ink pb-0.5 text-folio tracking-[0.16em] text-ink transition-colors group-hover:text-rose-deep">
+            <Camera size={13} strokeWidth={1.2} />
+            {uploading ? "保存中…" : "＋ SAVE A NEW IDEA"}
+          </span>
+          <span className="h-px flex-1 bg-edge/50" />
         </button>
-      </motion.section>
+        <p className="mt-2 font-hand text-xs text-ink-faint">看到喜欢的穿搭，先存起来。</p>
+      </motion.div>
 
-      {/* 灵感墙：editorial moodboard（图片为主角） */}
-      <section className="pt-8">
+      <div className="editorial-rule mt-7 w-full" />
+
+      {/* 灵感墙：图片为主角 */}
+      <section className="pt-7">
         {list.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="flex flex-col items-center py-24 text-center"
+            className="flex flex-col items-center py-28 text-center"
           >
-            <span className="font-serif text-4xl text-ink-faint/40">✦</span>
+            <span className="font-serif text-4xl text-ink-faint/30">✦</span>
             <p className="mt-6 font-hand text-lg text-ink-soft">灵感集还空着。</p>
             <p className="mt-2 font-hand text-sm text-ink-faint">把喜欢的穿搭、配色先存进来，不填任何字也行。</p>
           </motion.div>
         ) : (
-          <div className="columns-2 gap-x-5">
-            {list.map((insp, i) => (
+          <>
+            {/* 最新一张：hero */}
+            {featured && (
               <motion.button
-                key={insp.id}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-30px" }}
-                transition={{ duration: 0.45, ease: EASE }}
-                onClick={() => navigate(`/inspiration/${insp.id}`)}
-                className="mb-5 block w-full break-inside-avoid text-left"
-                style={{ rotate: `${WALL_ROT[i % WALL_ROT.length]}deg` }}
+                initial={{ opacity: 0, scale: 0.99 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, ease: EASE }}
+                onClick={() => navigate(`/inspiration/${featured.id}`)}
+                className="relative block w-full"
               >
-                <img
-                  src={insp.image_url}
-                  alt="inspiration"
-                  loading="lazy"
-                  className="w-full border border-edge/40 bg-paper-soft"
-                  style={{ borderRadius: 2 }}
-                />
-                {insp.tags.length > 0 && (
+                <div className="flex justify-center border border-edge/20 bg-paper-soft" style={{ borderRadius: 2 }}>
+                  <img
+                    src={featured.image_url}
+                    alt="latest inspiration"
+                    className="max-h-[62vh] w-auto max-w-full object-contain"
+                  />
+                </div>
+                {featured.tags.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-x-2">
-                    {insp.tags.map((t) => (
+                    {featured.tags.map((t) => (
                       <span key={t} className="font-hand text-[11px] text-ink-faint">
                         #{t}
                       </span>
@@ -125,8 +125,46 @@ export default function InspirationPage() {
                   </div>
                 )}
               </motion.button>
-            ))}
-          </div>
+            )}
+
+            {/* 其余：masonry，多为 0° */}
+            {rest.length > 0 && (
+              <div className={`columns-2 gap-x-5 ${featured ? "mt-6" : ""}`}>
+                {rest.map((insp, i) => {
+                  const rot = rotFor(i);
+                  return (
+                    <motion.button
+                      key={insp.id}
+                      initial={{ opacity: 0, scale: 0.985 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-30px" }}
+                      transition={{ duration: 0.5, ease: EASE }}
+                      onClick={() => navigate(`/inspiration/${insp.id}`)}
+                      className="mb-5 block w-full break-inside-avoid text-left"
+                      style={rot ? { rotate: `${rot}deg` } : undefined}
+                    >
+                      <img
+                        src={insp.image_url}
+                        alt="inspiration"
+                        loading="lazy"
+                        className="w-full border border-edge/25 bg-paper-soft"
+                        style={{ borderRadius: 2 }}
+                      />
+                      {insp.tags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-x-2">
+                          {insp.tags.map((t) => (
+                            <span key={t} className="font-hand text-[10px] text-ink-faint">
+                              #{t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

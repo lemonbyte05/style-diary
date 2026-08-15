@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 import struct
 import uuid
 from datetime import date
@@ -101,12 +102,19 @@ def _load_items(conn, ids: list[int]) -> list[dict]:
 
 
 def _load_look(conn, row) -> dict:
+    inspiration_image = None
+    if row["inspiration_id"]:
+        ir = conn.execute(
+            "SELECT image_url FROM inspirations WHERE id = ?", (row["inspiration_id"],)
+        ).fetchone()
+        inspiration_image = ir["image_url"] if ir else None
     return {
         "id": row["id"],
         "created_at": row["created_at"],
         "title": row["title"],
         "note": row["note"],
         "inspiration_id": row["inspiration_id"],
+        "inspiration_image": inspiration_image,
         "items": _load_items(conn, json.loads(row["item_ids"])),
     }
 
@@ -206,7 +214,7 @@ def items_create(body: ItemCreate) -> dict:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                body.name.strip() or "未命名单品",
+                body.name.strip(),
                 body.emoji or "👗",
                 body.category,
                 body.color_hex,
@@ -288,7 +296,7 @@ def items_update(item_id: int, body: ItemCreate) -> dict:
             WHERE id=?
             """,
             (
-                body.name.strip() or "未命名单品",
+                body.name.strip(),
                 body.emoji or "👗",
                 body.category,
                 body.color_hex,
@@ -423,17 +431,30 @@ def looks_list() -> dict:
 
 
 class LookCreate(BaseModel):
-    title: str
+    title: str = ""
     note: str = ""
     item_ids: list[int] = []
     inspiration_id: Optional[int] = None
+
+
+def _next_look_title(conn) -> str:
+    """自动编号：取现有最大 LOOK N + 1，删除后不复用"""
+    nums = []
+    for r in conn.execute("SELECT title FROM looks").fetchall():
+        m = re.fullmatch(r"LOOK\s+(\d+)", (r["title"] or "").strip(), re.IGNORECASE)
+        if m:
+            nums.append(int(m.group(1)))
+    return f"LOOK {(max(nums) + 1) if nums else 1}"
 
 
 @app.post("/api/looks")
 def looks_create(body: LookCreate) -> dict:
     if not body.item_ids:
         raise HTTPException(status_code=400, detail="搭配至少需要一件单品")
+    title = (body.title or "").strip()
     with get_connection() as conn:
+        if not title:
+            title = _next_look_title(conn)
         cur = conn.execute(
             """
             INSERT INTO looks (created_at, title, note, item_ids, inspiration_id)
@@ -441,7 +462,7 @@ def looks_create(body: LookCreate) -> dict:
             """,
             (
                 date.today().isoformat(),
-                body.title or "无题",
+                title,
                 body.note,
                 json.dumps(body.item_ids),
                 body.inspiration_id,

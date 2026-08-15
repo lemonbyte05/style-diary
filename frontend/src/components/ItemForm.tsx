@@ -60,7 +60,7 @@ export function ItemForm({
     setSaving(true);
     try {
       await onSubmit({
-        name: name.trim() || "未命名单品",
+        name: name.trim(),
         category,
         color_hex: color,
         season,
@@ -98,7 +98,7 @@ export function ItemForm({
             style={{ borderRadius: 3, aspectRatio: "4/5" }}
           >
             <ClothingImage
-              item={{ name: name || "新收藏", category, color_hex: color, image_url: imageUrl, image_type: imageType }}
+              item={{ name, category, color_hex: color, image_url: imageUrl, image_type: imageType }}
               className="h-full w-full"
             />
             <span className="absolute bottom-3 left-1/2 -translate-x-1/2 border border-ink/70 bg-paper/80 px-3 py-1 text-folio tracking-[0.18em] text-ink backdrop-blur-sm">
@@ -125,7 +125,7 @@ export function ItemForm({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="给它起个名字（可留空，自动命名）"
+          placeholder="起个名字（可留空）"
           className="w-full border-b border-edge bg-transparent pb-2 font-serif text-title text-ink outline-none placeholder:text-ink-faint/50"
         />
       </section>

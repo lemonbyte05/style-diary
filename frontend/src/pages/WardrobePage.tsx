@@ -98,7 +98,7 @@ export default function WardrobePage() {
         transition={{ duration: 0.7 }}
       >
         <div className="flex items-baseline justify-between">
-          <FolioText>✦ FASHION ARCHIVE</FolioText>
+          <FolioText>FASHION ARCHIVE</FolioText>
           <div className="flex items-baseline gap-4">
             <button
               onClick={() => navigate("/add")}
@@ -286,7 +286,9 @@ export default function WardrobePage() {
                     >
                       <ClothingImage item={item} className="h-full w-full" />
                     </div>
-                    <p className="mt-1.5 truncate text-center font-serif text-[13px] text-ink">{item.name}</p>
+                    {item.name && (
+                      <p className="mt-1.5 truncate text-center font-serif text-[13px] text-ink">{item.name}</p>
+                    )}
                   </button>
                 );
               })}
@@ -375,6 +377,7 @@ function renderWall(
         item={item}
         index={i}
         rotate={WALL_ROT[i % WALL_ROT.length]}
+        delay={(i % 6) * 0.05}
         tape={i % 5 === 2}
         onOpen={onOpen}
         selectable={selecting}

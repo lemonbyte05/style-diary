@@ -98,10 +98,12 @@ export function ArchivePlate({
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: String(photoAspect) }}>
           <ClothingImage item={item} className="absolute inset-0 h-full w-full" />
         </div>
-        <div className="mt-2 flex items-baseline justify-between gap-2">
-          <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
-            {item.name}
-          </span>
+        <div className={`mt-2 flex items-baseline gap-2 ${item.name ? "justify-between" : "justify-end"}`}>
+          {item.name && (
+            <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
+              {item.name}
+            </span>
+          )}
           <FolioText>{label}</FolioText>
         </div>
       </button>

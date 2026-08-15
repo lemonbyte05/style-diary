@@ -74,8 +74,10 @@ export default function ItemDetailPage() {
         transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
         className="relative mt-10"
       >
-        <h1 className="font-serif text-title leading-tight text-ink">{item.name}</h1>
-        <FolioText className="mt-1.5">GARMENT NO.{pad(item.id)}</FolioText>
+        {item.name && (
+          <h1 className="font-serif text-title leading-tight text-ink">{item.name}</h1>
+        )}
+        <FolioText className={item.name ? "mt-1.5" : ""}>GARMENT NO.{pad(item.id)}</FolioText>
 
         {/* 档案信息：只显示有值的字段 */}
         <div className="mt-6 border-t border-edge/60">

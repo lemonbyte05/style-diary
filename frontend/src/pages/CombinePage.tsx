@@ -8,7 +8,6 @@ import { FolioText } from "@/components/ui/FolioText";
 import { ClothingImage } from "@/components/ui/ClothingImage";
 import { pickShape, type GarmentShape } from "@/components/ui/GarmentPlate";
 import { StampSeal } from "@/components/ui/StampSeal";
-import { LeafSpray } from "@/components/ui/LeafSpray";
 import { haptic } from "@/haptics";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
@@ -57,7 +56,6 @@ export default function CombinePage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
-  const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
   const [wornToday, setWornToday] = useState(false);
   const [weather, setWeather] = useState("sun");
@@ -110,7 +108,7 @@ export default function CombinePage() {
     haptic.stamp();
     try {
       await api.lookCreate({
-        title: title.trim() || "未命名的搭配",
+        title: "",
         note: note.trim(),
         item_ids: selected,
         inspiration_id: ref?.id ?? null,
@@ -127,50 +125,56 @@ export default function CombinePage() {
 
   return (
     <div className="mx-auto max-w-md px-7 pb-44 pt-9">
-      <LeafSpray className="pointer-events-none absolute right-2 top-2 h-10 w-20 text-ink-faint/30" />
-
       <motion.header
         initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: EASE }}
       >
         <div className="flex items-baseline justify-between">
-          <FolioText>✦ STYLE BOARD</FolioText>
+          <FolioText>STYLING DESK</FolioText>
           <FolioText>{selectedItems.length} PIECES</FolioText>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">组合</h1>
-        <p className="mt-2 font-serif text-caption text-ink-soft">选中即自动摆成穿搭板，无需手动调整</p>
+        <p className="mt-2 font-serif text-caption text-ink-soft">在桌面上摆出你的 Look</p>
       </motion.header>
 
       <div className="editorial-rule mt-6 w-full" />
 
-      {/* 参考灵感（REFERENCE LOOK，可折叠） */}
+      {/* 参考灵感：小型 sticky 条，可折叠，滚动时仍可瞥一眼 */}
       {ref && (
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE }}
-          className="pt-6"
+          className="sticky top-0 z-30 -mx-7 mt-6 border-b border-edge/50 bg-paper/95 px-7 pb-2 pt-2 backdrop-blur-sm"
         >
           <button
             onClick={() => setRefOpen((v) => !v)}
-            className="flex w-full items-baseline justify-between border border-edge/70 bg-paper-soft/50 px-4 py-2.5"
-            style={{ borderRadius: 3 }}
+            className="flex w-full items-center gap-3"
           >
-            <FolioText>REFERENCE LOOK</FolioText>
-            <span className="font-hand text-xs text-ink-faint">{refOpen ? "隐藏 ▲" : "展开 ▼"}</span>
+            <img
+              src={ref.url}
+              alt="reference look"
+              className="h-11 w-9 shrink-0 border border-edge/50 bg-paper-soft object-cover"
+              style={{ borderRadius: 2 }}
+            />
+            <span className="min-w-0 flex-1 text-left">
+              <FolioText>REFERENCE LOOK</FolioText>
+              <span className="block truncate font-hand text-[11px] text-ink-faint">灵感参考 · 一边看一边挑</span>
+            </span>
+            <span className="shrink-0 font-hand text-xs text-ink-faint">{refOpen ? "收起 ▲" : "展开 ▼"}</span>
           </button>
           {refOpen && (
-            <div className="mt-3 flex justify-center border border-edge/50 bg-paper-deep/30 p-3" style={{ borderRadius: 3 }}>
+            <div className="mt-2 flex justify-center border border-edge/40 bg-paper-deep/30 p-2" style={{ borderRadius: 2 }}>
               <img
                 src={ref.url}
                 alt="reference look"
-                className="max-h-72 w-auto max-w-full border border-edge/40 bg-paper-soft"
+                className="max-h-64 w-auto max-w-full border border-edge/30 bg-paper-soft"
                 style={{ borderRadius: 2 }}
               />
             </div>
           )}
-        </motion.section>
+        </motion.div>
       )}
 
       {/* 自动排版穿搭板 */}
@@ -182,7 +186,7 @@ export default function CombinePage() {
       >
         <div className="flex items-baseline justify-between">
           <FolioText>STYLE BOARD</FolioText>
-          <span className="font-hand text-xs text-ink-faint">按角色自动摆放：外套/上衣/下装/裙/包/鞋</span>
+          <span className="font-hand text-xs text-ink-faint">按角色摆开：外套/上衣/下装/裙/包/鞋</span>
         </div>
 
         <div className="relative mt-3 overflow-hidden" style={{ height: BOARD_HEIGHT, borderRadius: 4, boxShadow: "0 18px 44px -18px rgba(48, 40, 33, 0.18)" }}>
@@ -256,23 +260,13 @@ export default function CombinePage() {
         </div>
       </section>
 
-      {/* 命名与保存 */}
+      {/* 保存（命名可选，自动 LOOK N） */}
       <section className="pt-8">
-        <div className="flex items-baseline gap-3">
-          <FolioText>给这套取个名字</FolioText>
-          <span className="h-px flex-1 bg-edge/60" />
-        </div>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="例如：奶油色的星期三"
-          className="mt-3 w-full border-b border-edge bg-transparent pb-2 font-serif text-title text-ink outline-none placeholder:text-ink-faint/50"
-        />
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="一句想说的话（可留空）"
-          className="mt-3 w-full border-b border-edge bg-transparent pb-2 font-hand text-caption text-ink-soft outline-none placeholder:text-ink-faint/50"
+          className="w-full border-b border-edge bg-transparent pb-2 font-hand text-caption text-ink-soft outline-none placeholder:text-ink-faint/50"
         />
 
         <div className="mt-7 border-t border-edge/60 pt-5">

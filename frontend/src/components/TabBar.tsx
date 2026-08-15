@@ -46,8 +46,8 @@ export function TabBar() {
       >
         {active && <span className="absolute bottom-[-7px] h-[2px] w-5 bg-rose" />}
         {tab.textOnly ? (
-          <span className={`font-serif text-[13px] tracking-[0.2em] ${active ? "text-ink" : "text-ink-faint"}`}>
-            LOOK
+          <span className={`font-serif text-[13px] tracking-[0.16em] ${active ? "text-ink" : "text-ink-faint"}`}>
+            {tab.label}
           </span>
         ) : (
           <>
@@ -68,8 +68,7 @@ export function TabBar() {
           transition={{ duration: 0.55, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="relative flex items-center border-t border-edge/60 bg-paper/90 px-7 pb-[max(env(safe-area-inset-bottom),10px)] pt-2 backdrop-blur-sm"
         >
-          {renderItem(LEFT_TABS[0])}
-          {renderItem(LEFT_TABS[1])}
+          {LEFT_TABS.map((t) => renderItem(t))}
 
           {/* 中央记录：进入手动搭配 */}
           <button

@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from pathlib import Path
 
@@ -90,3 +91,28 @@ def init_db() -> None:
         look_cols = [r["name"] for r in conn.execute("PRAGMA table_info(looks)").fetchall()]
         if "inspiration_id" not in look_cols:
             conn.execute("ALTER TABLE looks ADD COLUMN inspiration_id INTEGER")
+        # 迁移：历史默认占位标题 → 自动编号 LOOK N（真实标题不动）
+        _migrate_look_titles(conn)
+
+
+def _migrate_look_titles(conn) -> None:
+    placeholders = {
+        "无题", "未命名", "未命名的搭配", "未命名穿搭",
+        "untitled", "untitled look", "untitled item", "",
+    }
+    rows = conn.execute("SELECT id, title FROM looks ORDER BY created_at, id").fetchall()
+    used = set()
+    for r in rows:
+        m = re.fullmatch(r"LOOK\s+(\d+)", (r["title"] or "").strip(), re.IGNORECASE)
+        if m:
+            used.add(int(m.group(1)))
+    n = 1
+    for r in rows:
+        t = (r["title"] or "").strip()
+        if t.lower() in placeholders:
+            while n in used:
+                n += 1
+            used.add(n)
+            conn.execute(
+                "UPDATE looks SET title = ? WHERE id = ?", (f"LOOK {n}", r["id"])
+            )

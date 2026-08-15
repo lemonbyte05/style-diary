@@ -57,7 +57,7 @@ export default function LookbookPage() {
         transition={{ duration: 0.7, ease: EASE }}
       >
         <div className="flex items-baseline justify-between">
-          <FolioText>✦ PERSONAL FASHION ARCHIVE</FolioText>
+          <FolioText>FASHION DIARY</FolioText>
           <button
             onClick={() => setManaging((m) => !m)}
             className={`text-folio transition-colors ${managing ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
@@ -66,9 +66,8 @@ export default function LookbookPage() {
           </button>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">LOOKBOOK</h1>
-        <p className="mt-2 font-serif text-caption text-ink-soft">我的搭配</p>
+        <p className="mt-2 font-serif text-caption text-ink-soft">我的穿搭作品册</p>
         <p className="mt-4 text-folio text-ink-faint">{looks.length} LOOKS</p>
-        <p className="mt-2 font-hand text-sm text-ink-soft">都是你自己搭出来的。</p>
       </motion.header>
 
       <div className="editorial-rule mt-7 w-full" />
@@ -90,8 +89,16 @@ export default function LookbookPage() {
                 <span className="h-px flex-1 bg-edge/60" />
                 <FolioText>{list.length} LOOKS</FolioText>
               </div>
-              {list.map((o) => (
-                <LookEntry key={o.id} look={o} manage={managing} onDelete={() => remove(o.id)} />
+              {list.map((o, idx) => (
+                <motion.div
+                  key={o.id}
+                  initial={{ opacity: 0, x: -14 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-30px" }}
+                  transition={{ duration: 0.45, delay: Math.min(idx * 0.06, 0.3), ease: EASE }}
+                >
+                  <LookEntry look={o} manage={managing} onDelete={() => remove(o.id)} />
+                </motion.div>
               ))}
             </section>
           );

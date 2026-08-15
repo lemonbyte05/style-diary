@@ -39,6 +39,8 @@ export interface Look {
   note: string;
   /** 灵感来源（可选）：这个 Look 是从哪张灵感参考来的 */
   inspiration_id?: number | null;
+  /** 灵感来源缩略图（可选） */
+  inspiration_image?: string | null;
   items: Item[];
 }
 
