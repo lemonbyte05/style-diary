@@ -5,7 +5,7 @@ import { Search, Plus } from "lucide-react";
 import { api } from "@/api";
 import { CATEGORIES, type Collection, type Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
-import { ArchivePlate, type PlateVariant } from "@/components/ui/ArchivePlate";
+import { ArchivePlate } from "@/components/ui/ArchivePlate";
 import { ClothingImage } from "@/components/ui/ClothingImage";
 import { haptic } from "@/haptics";
 
@@ -292,7 +292,7 @@ export default function WardrobePage() {
               })}
             </div>
           ) : (
-            <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-9">
+            <div className="mt-7 columns-2 gap-x-5">
               {renderWall(filtered, (id) => navigate(`/item/${id}`), selecting, selectedIds, toggleSelect, flashId)}
             </div>
           )}
@@ -358,7 +358,9 @@ export default function WardrobePage() {
   );
 }
 
-/* ---------- 编辑式档案墙 ---------- */
+/* ---------- 档案墙：2 列瀑布流，轻微旋转的相纸卡 ---------- */
+const WALL_ROT = [-1.6, 1.4, -2.1, 1.8, -1.2, 2, -1.8, 1.5, -1.4, 1.3, -2.3];
+
 function renderWall(
   items: Item[],
   onOpen: (id: number) => void,
@@ -367,69 +369,19 @@ function renderWall(
   toggleSelect: (id: number) => void,
   flashId?: number | null
 ) {
-  const nodes: React.ReactNode[] = [];
-  for (let i = 0; i < items.length; i++) {
-    if (i % 4 === 0) {
-      const band = items.slice(i, i + 2);
-      if (band.length === 0) continue;
-      nodes.push(
-        <div key={`band-${i}`} className="col-span-2">
-          <div className="flex items-baseline justify-between">
-            <FolioText>COLLECTION NO.{String(Math.floor(i / 4) + 1).padStart(2, "0")}</FolioText>
-            <span className="font-hand text-xs text-ink-faint">并列陈列，可勾选组合</span>
-          </div>
-          <div className="mt-3 flex gap-4">
-            {band.map((item, j) => (
-              <div
-                key={item.id}
-                id={`plate-${item.id}`}
-                className={j === 1 ? "mt-7 w-1/2" : "w-1/2"}
-                style={{ boxShadow: flashId === item.id ? "0 0 0 3px rgb(var(--c-rose))" : undefined }}
-              >
-                <ArchivePlate
-                  item={item}
-                  index={item.id}
-                  variant={j === 0 ? "editorial" : "archive"}
-                  rotate={j === 0 ? -1.4 : 1.6}
-                  tall={false}
-                  onOpen={onOpen}
-                  selectable={selecting}
-                  selected={selectedIds.includes(item.id)}
-                  onSelect={toggleSelect}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-      i++;
-      continue;
-    }
-    const mod = i % 4;
-    const item = items[i];
-    const variant: PlateVariant =
-      mod === 2 ? "editorial" : mod === 3 ? "minimal" : "polaroid";
-    nodes.push(
-      <div
-        key={item.id}
-        id={`plate-${item.id}`}
-        className={mod === 2 ? "mt-10" : ""}
-        style={{ boxShadow: flashId === item.id ? "0 0 0 3px rgb(var(--c-rose))" : undefined }}
-      >
-        <ArchivePlate
-          item={item}
-          index={i}
-          variant={variant}
-          rotate={mod === 1 ? -1.6 : 1.2}
-          tall={mod !== 2}
-          tape={i === 1 || i === 5}
-          onOpen={onOpen}
-          selectable={selecting}
-          selected={selectedIds.includes(item.id)}
-          onSelect={toggleSelect}
-        />
-      </div>
-    );
-  }
-  return nodes;
+  return items.map((item, i) => (
+    <div key={item.id} id={`plate-${item.id}`} className="mb-6 break-inside-avoid">
+      <ArchivePlate
+        item={item}
+        index={i}
+        rotate={WALL_ROT[i % WALL_ROT.length]}
+        tape={i % 5 === 2}
+        onOpen={onOpen}
+        selectable={selecting}
+        selected={selectedIds.includes(item.id)}
+        onSelect={toggleSelect}
+        highlight={flashId === item.id}
+      />
+    </div>
+  ));
 }

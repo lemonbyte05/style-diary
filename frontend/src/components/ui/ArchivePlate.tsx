@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { Item } from "@/types";
 import { FolioText } from "@/components/ui/FolioText";
@@ -5,21 +6,36 @@ import { ClothingImage } from "@/components/ui/ClothingImage";
 import { haptic } from "@/haptics";
 
 /**
- * 档案收藏件：以衣服图片为绝对主角，装饰尽量轻。
+ * 档案收藏件：以衣服图片为绝对主角。
  *
- * - polaroid  相纸感：轻纸边 + 小型编号（默认）
- * - archive   同 polaroid（简化后合并）
- * - editorial 无纸框，纯图片 + 名字
- * - minimal   留白浮像：contain 悬浮 + 投影，无纸框
+ * - 有真实图片时，卡片长宽比自动跟随图片真实比例（不裁切、无留白）
+ * - 无图片时按 tall/square 回退到版画占位
+ * - 统一纸框相纸卡：图片 + 名字 + 小型编号，装饰尽量轻
  */
 export type PlateVariant = "polaroid" | "archive" | "editorial" | "minimal";
 
-const ASPECT: Record<PlateVariant, (tall: boolean) => string> = {
-  polaroid: (t) => (t ? "aspect-[4/5]" : "aspect-square"),
-  archive: (t) => (t ? "aspect-[4/5]" : "aspect-square"),
-  editorial: (t) => (t ? "aspect-[4/5]" : "aspect-square"),
-  minimal: () => "aspect-[3/4]",
-};
+/** 读取图片真实宽高比（用于卡片自适配），加载失败回退 null */
+function useImageAspect(url?: string | null): number | null {
+  const [aspect, setAspect] = useState<number | null>(null);
+  useEffect(() => {
+    if (!url) {
+      setAspect(null);
+      return;
+    }
+    let alive = true;
+    const im = new Image();
+    im.onload = () => {
+      if (alive && im.naturalWidth && im.naturalHeight) {
+        setAspect(im.naturalWidth / im.naturalHeight);
+      }
+    };
+    im.src = url;
+    return () => {
+      alive = false;
+    };
+  }, [url]);
+  return aspect;
+}
 
 export function ArchivePlate({
   item,
@@ -28,11 +44,11 @@ export function ArchivePlate({
   delay = 0,
   tape = false,
   tall = true,
-  variant = "polaroid",
   onOpen,
   selectable = false,
   selected = false,
   onSelect,
+  highlight = false,
 }: {
   item: Item;
   index: number;
@@ -40,14 +56,16 @@ export function ArchivePlate({
   delay?: number;
   tape?: boolean;
   tall?: boolean;
-  variant?: PlateVariant;
   onOpen?: (id: number) => void;
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: number) => void;
+  highlight?: boolean;
 }) {
-  const aspect = ASPECT[variant](tall);
-  const showTape = tape && !selectable && variant === "polaroid";
+  const imgAspect = useImageAspect(item.image_url);
+  const fallback = tall ? 4 / 5 : 1;
+  const photoAspect = imgAspect ?? fallback;
+  const showTape = tape && !selectable;
   const label = String(index + 1).padStart(2, "0");
 
   return (
@@ -68,55 +86,24 @@ export function ArchivePlate({
           if (selectable) onSelect?.(item.id);
           else onOpen?.(item.id);
         }}
-        className="relative block transition-all duration-200"
+        className="relative block w-full bg-paper-soft p-2 pb-2 transition-all duration-200"
         style={{
-          borderRadius: 2,
+          borderRadius: 3,
+          boxShadow: highlight ? "0 0 0 3px rgb(var(--c-rose))" : "var(--sh-plate)",
           outline: selected ? "1px solid rgb(var(--c-rose-deep))" : "none",
           opacity: selectable && !selected ? 0.72 : 1,
           transform: selected ? "scale(1.02)" : undefined,
         }}
       >
-        {variant === "polaroid" && (
-          <div className={`relative bg-paper-soft p-1.5 pb-2 ${aspect}`}>
-            <div className="h-[calc(100%-1.75rem)] w-full">
-              <ClothingImage item={item} className="h-full w-full" />
-            </div>
-            <div className="mt-1 flex items-baseline justify-between gap-2">
-              <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
-                {item.name}
-              </span>
-              <FolioText>{label}</FolioText>
-            </div>
-          </div>
-        )}
-
-        {variant === "archive" && (
-          <div className={`relative bg-paper-soft p-1.5 pb-2 ${aspect}`}>
-            <div className="h-[calc(100%-1.75rem)] w-full">
-              <ClothingImage item={item} className="h-full w-full" />
-            </div>
-            <div className="mt-1 flex items-baseline justify-between gap-2">
-              <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
-                {item.name}
-              </span>
-              <FolioText>{label}</FolioText>
-            </div>
-          </div>
-        )}
-
-        {variant === "editorial" && (
-          <div className={aspect}>
-            <ClothingImage item={item} className="h-full w-full" />
-            <p className="mt-1.5 truncate font-serif text-[13px] text-ink">{item.name}</p>
-          </div>
-        )}
-
-        {variant === "minimal" && (
-          <div className={aspect}>
-            <ClothingImage item={item} className="h-full w-full" fit="contain" />
-            <p className="mt-1 truncate text-center font-hand text-[11px] text-ink-faint">{item.name}</p>
-          </div>
-        )}
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: String(photoAspect) }}>
+          <ClothingImage item={item} className="absolute inset-0 h-full w-full" />
+        </div>
+        <div className="mt-2 flex items-baseline justify-between gap-2">
+          <span className="min-w-0 flex-1 truncate text-left font-serif text-[13px] leading-tight text-ink">
+            {item.name}
+          </span>
+          <FolioText>{label}</FolioText>
+        </div>
       </button>
     </motion.div>
   );

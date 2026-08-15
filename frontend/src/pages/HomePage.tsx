@@ -5,15 +5,12 @@ import { api } from "@/api";
 import type { HomeData, TodayEdit } from "@/types";
 import { TornDivider } from "@/components/ui/TornDivider";
 import { FolioText } from "@/components/ui/FolioText";
-import { ArchivePlate, type PlateVariant } from "@/components/ui/ArchivePlate";
+import { ArchivePlate } from "@/components/ui/ArchivePlate";
 import { ClothingImage } from "@/components/ui/ClothingImage";
 import { LeafSpray } from "@/components/ui/LeafSpray";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
-
-/** 首页档案墙的变体循环：同页混用不同版式 */
-const HOME_WALL: PlateVariant[] = ["polaroid", "editorial", "archive", "minimal", "polaroid", "editorial"];
 
 export default function HomePage() {
   const [data, setData] = useState<HomeData | null>(null);
@@ -237,15 +234,13 @@ function RecentArchive({
           </button>
         </motion.div>
       ) : (
-        <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-6">
+        <div className="mt-5 columns-2 gap-x-5">
           {items.slice(0, 6).map((item, i) => (
-            <div key={item.id} className={i % 2 === 1 ? "mt-9" : ""}>
+            <div key={item.id} className="mb-6 break-inside-avoid">
               <ArchivePlate
                 item={item}
                 index={i}
-                variant={HOME_WALL[i % HOME_WALL.length]}
                 rotate={i % 2 === 0 ? -1.6 : 1.3}
-                tall={i % 2 === 0}
                 tape={i === 0 || i === 4}
                 onOpen={onOpen}
               />
