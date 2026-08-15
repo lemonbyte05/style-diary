@@ -12,6 +12,7 @@ interface TabItem {
 
 const LEFT_TABS: TabItem[] = [
   { to: "/wardrobe", label: "衣橱", icon: Shirt, textOnly: false },
+  { to: "/inspiration", label: "灵感", icon: null, textOnly: true },
   { to: "/lookbook", label: "LOOK", icon: null, textOnly: true },
 ];
 

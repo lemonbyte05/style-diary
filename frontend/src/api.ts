@@ -1,4 +1,4 @@
-import type { Collection, HomeData, Item, Look, Wear } from "@/types";
+import type { Collection, HomeData, Inspiration, Item, Look, Wear } from "@/types";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -63,9 +63,22 @@ export const api = {
   itemUpdate: (id: number | string, payload: ItemPayload) => put<{ item: Item }>(`/api/items/${id}`, payload),
   itemDelete: (id: number) => del<{ ok: boolean }>(`/api/items/${id}`),
   looks: () => get<{ looks: Look[] }>("/api/looks"),
-  lookCreate: (payload: { title: string; note: string; item_ids: number[] }) =>
+  lookCreate: (payload: { title: string; note: string; item_ids: number[]; inspiration_id?: number | null }) =>
     post<{ look: Look }>("/api/looks", payload),
   lookDelete: (id: number) => del<{ ok: boolean }>(`/api/looks/${id}`),
+  inspirations: () => get<{ inspirations: Inspiration[] }>("/api/inspirations"),
+  inspirationCreate: (payload: { image_url: string; tags: string[]; note?: string }) =>
+    post<{ inspiration: Inspiration }>("/api/inspirations", payload),
+  inspirationDelete: (id: number) => del<{ ok: boolean }>(`/api/inspirations/${id}`),
+  inspirationUpdate: (id: number, payload: { tags: string[]; note?: string }) =>
+    put<{ inspiration: Inspiration }>(`/api/inspirations/${id}`, payload),
+  inspirationUpload: async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/inspirations/upload", { method: "POST", body: fd });
+    if (!res.ok) throw new Error("上传失败");
+    return res.json() as Promise<{ url: string }>;
+  },
   collections: () => get<{ collections: Collection[] }>("/api/collections"),
   collectionCreate: (name: string) => post<{ collection: Collection }>("/api/collections", { name }),
   collectionDelete: (id: number) => del<{ ok: boolean }>(`/api/collections/${id}`),

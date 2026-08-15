@@ -62,9 +62,17 @@ export default function CombinePage() {
   const [wornToday, setWornToday] = useState(false);
   const [weather, setWeather] = useState("sun");
   const [saved, setSaved] = useState(false);
+  const [ref, setRef] = useState<{ id: number; url: string } | null>(null);
+  const [refOpen, setRefOpen] = useState(true);
 
   useEffect(() => {
-    const pre = (location.state as { selectedIds?: number[] } | null)?.selectedIds ?? [];
+    const st = (location.state as { selectedIds?: number[]; inspirationId?: number; referenceUrl?: string } | null) ?? null;
+    const pre = st?.selectedIds ?? [];
+    if (st?.inspirationId && st.referenceUrl) {
+      setRef({ id: st.inspirationId, url: st.referenceUrl });
+    } else {
+      setRef(null);
+    }
     api.items().then((r) => {
       setItems(r.items);
       setSelected(pre.filter((id) => r.items.some((i) => i.id === id)));
@@ -101,7 +109,12 @@ export default function CombinePage() {
     if (saved || selectedItems.length === 0) return;
     haptic.stamp();
     try {
-      await api.lookCreate({ title: title.trim() || "未命名的搭配", note: note.trim(), item_ids: selected });
+      await api.lookCreate({
+        title: title.trim() || "未命名的搭配",
+        note: note.trim(),
+        item_ids: selected,
+        inspiration_id: ref?.id ?? null,
+      });
       if (wornToday) {
         await api.wearCreate({ item_ids: selected, weather, note: note.trim() });
       }
@@ -130,6 +143,35 @@ export default function CombinePage() {
       </motion.header>
 
       <div className="editorial-rule mt-6 w-full" />
+
+      {/* 参考灵感（REFERENCE LOOK，可折叠） */}
+      {ref && (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="pt-6"
+        >
+          <button
+            onClick={() => setRefOpen((v) => !v)}
+            className="flex w-full items-baseline justify-between border border-edge/70 bg-paper-soft/50 px-4 py-2.5"
+            style={{ borderRadius: 3 }}
+          >
+            <FolioText>REFERENCE LOOK</FolioText>
+            <span className="font-hand text-xs text-ink-faint">{refOpen ? "隐藏 ▲" : "展开 ▼"}</span>
+          </button>
+          {refOpen && (
+            <div className="mt-3 flex justify-center border border-edge/50 bg-paper-deep/30 p-3" style={{ borderRadius: 3 }}>
+              <img
+                src={ref.url}
+                alt="reference look"
+                className="max-h-72 w-auto max-w-full border border-edge/40 bg-paper-soft"
+                style={{ borderRadius: 2 }}
+              />
+            </div>
+          )}
+        </motion.section>
+      )}
 
       {/* 自动排版穿搭板 */}
       <motion.section

@@ -8,6 +8,8 @@ import CombinePage from "@/pages/CombinePage";
 import AddItemPage from "@/pages/AddItemPage";
 import EditItemPage from "@/pages/EditItemPage";
 import MePage from "@/pages/MePage";
+import InspirationPage from "@/pages/InspirationPage";
+import InspirationDetailPage from "@/pages/InspirationDetailPage";
 import { TabBar } from "@/components/TabBar";
 
 function AnimatedRoutes() {
@@ -24,6 +26,8 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<HomePage />} />
           <Route path="/wardrobe" element={<WardrobePage />} />
+          <Route path="/inspiration" element={<InspirationPage />} />
+          <Route path="/inspiration/:id" element={<InspirationDetailPage />} />
           <Route path="/lookbook" element={<LookbookPage />} />
           <Route path="/combine" element={<CombinePage />} />
           <Route path="/add" element={<AddItemPage />} />

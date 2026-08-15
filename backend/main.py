@@ -18,6 +18,8 @@ from seed import seed, serialize_item, MOODS
 
 GARMENTS_DIR = Path(__file__).parent / "static" / "garments"
 GARMENTS_DIR.mkdir(parents=True, exist_ok=True)
+INSPIRATIONS_DIR = Path(__file__).parent / "static" / "inspirations"
+INSPIRATIONS_DIR.mkdir(parents=True, exist_ok=True)
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10MB
 
 app = FastAPI(title="My Style Diary", version="0.4.0")
@@ -104,7 +106,18 @@ def _load_look(conn, row) -> dict:
         "created_at": row["created_at"],
         "title": row["title"],
         "note": row["note"],
+        "inspiration_id": row["inspiration_id"],
         "items": _load_items(conn, json.loads(row["item_ids"])),
+    }
+
+
+def serialize_inspiration(row) -> dict:
+    return {
+        "id": row["id"],
+        "image_url": row["image_url"],
+        "tags": json.loads(row["tags"]),
+        "note": row["note"],
+        "created_at": row["created_at"],
     }
 
 
@@ -233,12 +246,12 @@ async def items_upload(file: UploadFile = File(...)) -> dict:
     return {"url": f"/static/garments/{name}", "image_type": image_type}
 
 
-def _remove_image_file(url: Optional[str]) -> None:
+def _remove_image_file(url: Optional[str], root: Path = GARMENTS_DIR) -> None:
     if not url:
         return
     try:
         path = (Path(__file__).parent / url.lstrip("/")).resolve()
-        if str(path).startswith(str(GARMENTS_DIR.resolve())) and path.is_file():
+        if str(path).startswith(str(root.resolve())) and path.is_file():
             path.unlink()
     except OSError:
         pass
@@ -413,6 +426,7 @@ class LookCreate(BaseModel):
     title: str
     note: str = ""
     item_ids: list[int] = []
+    inspiration_id: Optional[int] = None
 
 
 @app.post("/api/looks")
@@ -422,14 +436,15 @@ def looks_create(body: LookCreate) -> dict:
     with get_connection() as conn:
         cur = conn.execute(
             """
-            INSERT INTO looks (created_at, title, note, item_ids)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO looks (created_at, title, note, item_ids, inspiration_id)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 date.today().isoformat(),
                 body.title or "无题",
                 body.note,
                 json.dumps(body.item_ids),
+                body.inspiration_id,
             ),
         )
         row = conn.execute(
@@ -481,6 +496,97 @@ def wears_delete(wear_id: int) -> dict:
     with get_connection() as conn:
         conn.execute("DELETE FROM wears WHERE id = ?", (wear_id,))
         return {"ok": True}
+
+
+@app.get("/api/inspirations")
+def inspirations_list() -> dict:
+    with get_connection() as conn:
+        rows = conn.execute("SELECT * FROM inspirations ORDER BY id DESC").fetchall()
+        return {"inspirations": [serialize_inspiration(r) for r in rows]}
+
+
+@app.post("/api/inspirations/upload")
+async def inspirations_upload(file: UploadFile = File(...)) -> dict:
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+        raise HTTPException(status_code=400, detail="不支持的图片格式")
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="图片超过 10MB 限制")
+    if len(data) == 0:
+        raise HTTPException(status_code=400, detail="空文件")
+    name = f"{uuid.uuid4().hex}{ext}"
+    dest = INSPIRATIONS_DIR / name
+    dest.write_bytes(data)
+    return {"url": f"/static/inspirations/{name}"}
+
+
+class InspirationCreate(BaseModel):
+    image_url: str
+    tags: list[str] = []
+    note: str = ""
+
+
+class InspirationUpdate(BaseModel):
+    tags: list[str] = []
+    note: str = ""
+
+
+@app.post("/api/inspirations")
+def inspirations_create(body: InspirationCreate) -> dict:
+    if not body.image_url.strip():
+        raise HTTPException(status_code=400, detail="灵感需要一张图片")
+    with get_connection() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO inspirations (image_url, tags, note, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                body.image_url.strip(),
+                json.dumps(body.tags),
+                body.note,
+                date.today().isoformat(),
+            ),
+        )
+        row = conn.execute(
+            "SELECT * FROM inspirations WHERE id = ?", (cur.lastrowid,)
+        ).fetchone()
+        return {"inspiration": serialize_inspiration(row)}
+
+
+@app.put("/api/inspirations/{inspiration_id}")
+def inspirations_update(inspiration_id: int, body: InspirationUpdate) -> dict:
+    with get_connection() as conn:
+        if not conn.execute(
+            "SELECT 1 FROM inspirations WHERE id = ?", (inspiration_id,)
+        ).fetchone():
+            raise HTTPException(status_code=404, detail="not_found")
+        conn.execute(
+            "UPDATE inspirations SET tags = ?, note = ? WHERE id = ?",
+            (json.dumps(body.tags), body.note, inspiration_id),
+        )
+        row = conn.execute(
+            "SELECT * FROM inspirations WHERE id = ?", (inspiration_id,)
+        ).fetchone()
+        return {"inspiration": serialize_inspiration(row)}
+
+
+@app.delete("/api/inspirations/{inspiration_id}")
+def inspirations_delete(inspiration_id: int) -> dict:
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT image_url FROM inspirations WHERE id = ?", (inspiration_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not_found")
+        conn.execute(
+            "UPDATE looks SET inspiration_id = NULL WHERE inspiration_id = ?",
+            (inspiration_id,),
+        )
+        conn.execute("DELETE FROM inspirations WHERE id = ?", (inspiration_id,))
+    _remove_image_file(row["image_url"], INSPIRATIONS_DIR)
+    return {"ok": True}
 
 
 @app.get("/api/ai/recommend")

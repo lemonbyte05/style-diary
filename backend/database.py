@@ -41,7 +41,16 @@ def init_db() -> None:
                 created_at TEXT NOT NULL,
                 title TEXT NOT NULL,
                 note TEXT DEFAULT '',
-                item_ids TEXT NOT NULL DEFAULT '[]'
+                item_ids TEXT NOT NULL DEFAULT '[]',
+                inspiration_id INTEGER
+            );
+
+            CREATE TABLE IF NOT EXISTS inspirations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                image_url TEXT NOT NULL,
+                tags TEXT NOT NULL DEFAULT '[]',
+                note TEXT DEFAULT '',
+                created_at TEXT NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS collections (
@@ -77,3 +86,7 @@ def init_db() -> None:
         for col, default in (("season", ""), ("brand", ""), ("material", ""), ("purchased_at", ""), ("price", "")):
             if col not in cols:
                 conn.execute(f"ALTER TABLE items ADD COLUMN {col} TEXT DEFAULT '{default}'")
+        # 迁移：老库补 looks.inspiration_id
+        look_cols = [r["name"] for r in conn.execute("PRAGMA table_info(looks)").fetchall()]
+        if "inspiration_id" not in look_cols:
+            conn.execute("ALTER TABLE looks ADD COLUMN inspiration_id INTEGER")
