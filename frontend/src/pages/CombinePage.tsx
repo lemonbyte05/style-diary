@@ -12,8 +12,8 @@ import { LeafSpray } from "@/components/ui/LeafSpray";
 import { haptic } from "@/haptics";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
+const BOARD_HEIGHT = 400;
 
-/** 服装角色 → 穿搭板上的位置（x/y 为容器百分比，w/h 为 px，z 控制前后叠压） */
 type Role = "outer" | "dress" | "top" | "bottom" | "bag" | "shoes" | "accessory";
 
 const ROLE_OF_SHAPE: Record<GarmentShape, Role> = {
@@ -27,25 +27,26 @@ const ROLE_OF_SHAPE: Record<GarmentShape, Role> = {
 };
 
 interface Slot {
-  x: number;
+  x: number; // 画布中心位置（百分比）
   y: number;
-  w: number;
+  w: number; // 版画基准尺寸 px
   h: number;
   rot: number;
   z: number;
 }
 
-const SLOTS: Record<Role, Slot> = {
-  outer: { x: 18, y: 30, w: 128, h: 164, rot: -4, z: 1 },
+/** 按服装角色自动排版：外套左后 / 连衣裙居中主视觉 / 上衣上 / 下装下 / 包右下 / 鞋左下 / 配饰右上 */
+const SLOT: Record<Role, Slot> = {
+  outer: { x: 18, y: 28, w: 128, h: 164, rot: -4, z: 1 },
   dress: { x: 50, y: 16, w: 150, h: 200, rot: -1.2, z: 3 },
-  top: { x: 44, y: 4, w: 112, h: 138, rot: 1.8, z: 2 },
+  top: { x: 44, y: 2, w: 112, h: 138, rot: 1.8, z: 2 },
   bottom: { x: 48, y: 42, w: 126, h: 130, rot: -1.6, z: 2 },
-  bag: { x: 80, y: 62, w: 96, h: 96, rot: 3.2, z: 2 },
+  bag: { x: 80, y: 60, w: 96, h: 96, rot: 3.2, z: 2 },
   shoes: { x: 14, y: 62, w: 84, h: 84, rot: 2.2, z: 1 },
-  accessory: { x: 86, y: 32, w: 78, h: 78, rot: -2.4, z: 1 },
+  accessory: { x: 86, y: 30, w: 78, h: 78, rot: -2.4, z: 1 },
 };
 
-const SINGLE_SLOT: Slot = { x: 50, y: 16, w: 168, h: 214, rot: -1.2, z: 2 };
+const SINGLE: Slot = { x: 50, y: 12, w: 168, h: 214, rot: -1.2, z: 2 };
 
 function roleOf(item: Item): Role {
   return ROLE_OF_SHAPE[pickShape(item)] ?? "accessory";
@@ -79,7 +80,7 @@ export default function CombinePage() {
     () =>
       selectedItems.map((item) => {
         const role = roleOf(item);
-        const slot = selectedItems.length === 1 ? SINGLE_SLOT : SLOTS[role];
+        const slot = selectedItems.length === 1 ? SINGLE : SLOT[role];
         return { item, role, slot };
       }),
     [selectedItems]
@@ -121,41 +122,42 @@ export default function CombinePage() {
         transition={{ duration: 0.7, ease: EASE }}
       >
         <div className="flex items-baseline justify-between">
-          <FolioText>✦ COMBINE</FolioText>
-          <FolioText>VOL.04</FolioText>
+          <FolioText>✦ STYLE BOARD</FolioText>
+          <FolioText>{selectedItems.length} PIECES</FolioText>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">组合</h1>
-        <p className="mt-2 font-serif text-caption text-ink-soft">手动搭配一套，属于自己的 Look</p>
+        <p className="mt-2 font-serif text-caption text-ink-soft">选中即自动摆成穿搭板，无需手动调整</p>
       </motion.header>
 
       <div className="editorial-rule mt-6 w-full" />
 
-      {/* 实时拼贴预览 */}
+      {/* 自动排版穿搭板 */}
       <motion.section
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
         className="pt-7"
       >
-        <FolioText>PREVIEW</FolioText>
-        {selectedItems.length === 0 ? (
-          <div className="flex h-40 flex-col items-center justify-center gap-2">
-            <span className="font-serif text-2xl text-ink-faint/40">—</span>
-            <p className="font-hand text-sm text-ink-faint">从下面挑几件，先看看拼起来的样子</p>
-          </div>
-        ) : (
-          <div className="relative mt-4" style={{ minHeight: 350 }}>
-            <div
-              className="pointer-events-none absolute inset-0 -m-2 rotate-[-0.6deg] border border-edge/80 bg-paper-deep/40"
-              style={{ borderRadius: 4, boxShadow: "0 18px 44px -18px rgba(48, 40, 33, 0.18)" }}
-            />
-            {placement.map((p, i) => {
+        <div className="flex items-baseline justify-between">
+          <FolioText>STYLE BOARD</FolioText>
+          <span className="font-hand text-xs text-ink-faint">按角色自动摆放：外套/上衣/下装/裙/包/鞋</span>
+        </div>
+
+        <div className="relative mt-3 overflow-hidden" style={{ height: BOARD_HEIGHT, borderRadius: 4, boxShadow: "0 18px 44px -18px rgba(48, 40, 33, 0.18)" }}>
+          <div className="pointer-events-none absolute inset-0 rotate-[-0.6deg] border border-edge/80 bg-paper-deep/40" />
+          {selectedItems.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <span className="font-serif text-2xl text-ink-faint/40">—</span>
+              <p className="font-hand text-sm text-ink-faint">从下面挑几件，自动帮你摆好</p>
+            </div>
+          ) : (
+            placement.map((p, i) => {
               const { item, slot } = p;
               const n = roleCounts[p.role];
               const t = n > 1 ? placement.filter((q) => q.role === p.role).map((q) => q.item.id).indexOf(item.id) - (n - 1) / 2 : 0;
-              const dx = t * 14;
-              const dy = Math.abs(t) * 8;
-              const drot = t * 2.4;
+              const dx = t * 16;
+              const dy = Math.abs(t) * 10;
+              const drot = t * 2.6;
               const left = `calc(${slot.x}% - ${slot.w / 2}px + ${dx}px)`;
               const top = `calc(${slot.y}% + ${dy}px)`;
               return (
@@ -171,20 +173,19 @@ export default function CombinePage() {
                     top,
                     width: slot.w,
                     height: slot.h,
-                    rotate: slot.rot + drot,
+                    rotate: `${slot.rot + drot}deg`,
                     zIndex: slot.z,
                   }}
                 >
                   <div className="h-full w-full bg-paper-soft p-2 shadow-plate" style={{ borderRadius: 2 }}>
                     <ClothingImage item={item} className="h-full w-full" />
                   </div>
-                  <p className="mt-1 max-w-[160px] truncate text-center font-hand text-[11px] text-ink-soft">{item.name}</p>
+                  <p className="mt-1 max-w-[170px] truncate text-center font-hand text-[11px] text-ink-soft">{item.name}</p>
                 </motion.button>
               );
-            })}
-          </div>
-        )}
-        <p className="mt-1 text-right text-folio text-ink-faint">{selectedItems.length} PIECES</p>
+            })
+          )}
+        </div>
       </motion.section>
 
       {/* 挑选单品 */}
@@ -194,11 +195,7 @@ export default function CombinePage() {
           {items.map((item) => {
             const on = selected.includes(item.id);
             return (
-              <button
-                key={item.id}
-                onClick={() => toggle(item.id)}
-                className="group"
-              >
+              <button key={item.id} onClick={() => toggle(item.id)} className="group">
                 <div
                   className={`bg-paper-soft p-1.5 transition-all duration-200 ${on ? "shadow-2" : "shadow-1 opacity-70 group-hover:opacity-100"}`}
                   style={{
