@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import HomePage from "@/pages/HomePage";
 import WardrobePage from "@/pages/WardrobePage";
 import ItemDetailPage from "@/pages/ItemDetailPage";
 import LookbookPage from "@/pages/LookbookPage";
@@ -24,7 +23,7 @@ function AnimatedRoutes() {
         transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <Routes location={location}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<Navigate to="/wardrobe" replace />} />
           <Route path="/wardrobe" element={<WardrobePage />} />
           <Route path="/inspiration" element={<InspirationPage />} />
           <Route path="/inspiration/:id" element={<InspirationDetailPage />} />

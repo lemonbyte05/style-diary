@@ -12,6 +12,7 @@ import { haptic } from "@/haptics";
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 
 export default function LookbookPage() {
+  const navigate = useNavigate();
   const [looks, setLooks] = useState<Look[]>([]);
   const [wears, setWears] = useState<Wear[]>([]);
   const [managing, setManaging] = useState(false);
@@ -57,16 +58,24 @@ export default function LookbookPage() {
         transition={{ duration: 0.7, ease: EASE }}
       >
         <div className="flex items-baseline justify-between">
-          <FolioText>FASHION DIARY</FolioText>
-          <button
-            onClick={() => setManaging((m) => !m)}
-            className={`text-folio transition-colors ${managing ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
-          >
-            {managing ? "完成" : "整理"}
-          </button>
+          <FolioText>MY LOOKS · 我创造的</FolioText>
+          <div className="flex items-baseline gap-4">
+            <button
+              onClick={() => navigate("/combine")}
+              className="text-folio tracking-[0.14em] text-rose-deep transition-colors hover:text-ink"
+            >
+              ＋ 新搭配
+            </button>
+            <button
+              onClick={() => setManaging((m) => !m)}
+              className={`text-folio transition-colors ${managing ? "text-rose-deep" : "text-ink-faint hover:text-ink"}`}
+            >
+              {managing ? "完成" : "整理"}
+            </button>
+          </div>
         </div>
-        <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">LOOKBOOK</h1>
-        <p className="mt-2 font-serif text-caption text-ink-soft">我的穿搭作品册</p>
+        <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">搭配</h1>
+        <p className="mt-2 font-serif text-caption text-ink-soft">我搭过的 Look</p>
         <p className="mt-4 text-folio text-ink-faint">{looks.length} LOOKS</p>
       </motion.header>
 

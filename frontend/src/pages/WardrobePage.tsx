@@ -116,6 +116,13 @@ export default function WardrobePage() {
             >
               {selecting ? "完成" : "勾选"}
             </button>
+            <button
+              onClick={() => navigate("/me")}
+              aria-label="我的档案"
+              className="text-folio text-ink-faint transition-colors hover:text-ink"
+            >
+              ⋯
+            </button>
           </div>
         </div>
         <h1 className="mt-4 font-serif text-display leading-[1.02] text-ink">WARDROBE</h1>

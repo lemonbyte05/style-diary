@@ -6,7 +6,7 @@ import { ClothingImage } from "@/components/ui/ClothingImage";
 import { haptic } from "@/haptics";
 
 /**
- * 搭配条目（编辑体，非卡片）：日期 + 版画 + 标题 + 手写短句
+ * 搭配条目（作品卡）：日期 + 大的单品拼合 + 标题 + 手写短句
  */
 export function LookEntry({
   look,
@@ -18,9 +18,11 @@ export function LookEntry({
   onDelete?: () => void;
 }) {
   const navigate = useNavigate();
+  const pieces = look.items.slice(0, 3);
+  const more = look.items.length - pieces.length;
 
   return (
-    <div className="border-b border-edge/50 py-5 last:border-0">
+    <div className="border-b border-edge/50 py-6 last:border-0">
       <div className="flex items-baseline justify-between">
         <FolioText>{formatFolioDate(look.created_at)}</FolioText>
         {manage ? (
@@ -34,45 +36,55 @@ export function LookEntry({
           <FolioText>LOOK NO.{String(look.id).padStart(2, "0")}</FolioText>
         )}
       </div>
-      <div className="mt-3 flex items-center gap-4">
-        <div className="flex shrink-0 items-start">
-          {look.items.slice(0, 2).map((item, i) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                haptic.tap();
-                navigate(`/item/${item.id}`);
-              }}
-              className={i === 0 ? "-rotate-2" : "-ml-5 mt-3 rotate-2"}
-            >
-              <div className="bg-paper-soft p-1.5 shadow-1" style={{ borderRadius: 2 }}>
-                <ClothingImage item={item} className="h-20 w-16" />
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className="min-w-0">
-          {/^LOOK\s+\d+$/i.test(look.title) ? (
-            <FolioText>{look.title}</FolioText>
-          ) : (
-            <h3 className="font-serif text-h2 leading-tight text-ink">「{look.title}」</h3>
-          )}
-          {look.note && <p className="mt-1 truncate font-hand text-caption text-ink-soft">{look.note}</p>}
-          {look.inspiration_id && look.inspiration_image && (
-            <button
-              onClick={() => navigate(`/inspiration/${look.inspiration_id}`)}
-              className="mt-2 inline-flex items-center gap-1.5 text-folio text-ink-faint transition-colors hover:text-rose-deep"
-            >
-              <img
-                src={look.inspiration_image}
-                alt="inspired by"
-                className="h-6 w-5 border border-edge/50 object-cover"
-                style={{ borderRadius: 1 }}
-              />
-              INSPIRED BY
-            </button>
-          )}
-        </div>
+
+      {/* 大的穿搭拼合（居中） */}
+      <div className="mt-5 flex items-start justify-center">
+        {pieces.map((item, i) => (
+          <button
+            key={item.id}
+            onClick={() => {
+              haptic.tap();
+              navigate(`/item/${item.id}`);
+            }}
+            className={
+              i === 0
+                ? "-rotate-2"
+                : i === 1
+                  ? "-ml-10 mt-5 rotate-1"
+                  : "-ml-9 mt-10 rotate-2"
+            }
+          >
+            <div className="bg-paper-soft p-2 shadow-plate" style={{ borderRadius: 2 }}>
+              <ClothingImage item={item} className="h-36 w-28" />
+            </div>
+          </button>
+        ))}
+        {more > 0 && (
+          <span className="mt-10 ml-2 font-hand text-sm text-ink-faint">+{more}</span>
+        )}
+      </div>
+
+      <div className="mt-4">
+        {/^LOOK\s+\d+$/i.test(look.title) ? (
+          <FolioText>{look.title}</FolioText>
+        ) : (
+          <h3 className="font-serif text-h2 leading-tight text-ink">「{look.title}」</h3>
+        )}
+        {look.note && <p className="mt-1 truncate font-hand text-caption text-ink-soft">{look.note}</p>}
+        {look.inspiration_id && look.inspiration_image && (
+          <button
+            onClick={() => navigate(`/inspiration/${look.inspiration_id}`)}
+            className="mt-2 inline-flex items-center gap-1.5 text-folio text-ink-faint transition-colors hover:text-rose-deep"
+          >
+            <img
+              src={look.inspiration_image}
+              alt="inspired by"
+              className="h-6 w-5 border border-edge/50 object-cover"
+              style={{ borderRadius: 1 }}
+            />
+            INSPIRED BY
+          </button>
+        )}
       </div>
     </div>
   );
